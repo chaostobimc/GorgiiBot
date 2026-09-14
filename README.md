@@ -16,6 +16,15 @@ python3 -m http.server 8080
 # danach http://localhost:8080 öffnen
 ```
 
+**Option C – per npm** (z. B. Raspberry Pi, keine Abhängigkeiten nötig):
+
+```bash
+cd GorgiiBot
+npm start
+# eigener Port: PORT=2345 npm start
+# danach http://localhost:8080 (bzw. Geräte-IP:Port) öffnen
+```
+
 ## Benutzung
 
 1. **Twitch-Kanal verbinden:** Kanalnamen oben eingeben → *Verbinden*.

@@ -1,0 +1,18 @@
+{
+  "name": "gorgiibot",
+  "version": "1.0.0",
+  "description": "Interaktives Twitch-Giveaway-System (Glücksrad & Case Opening) – rein clientseitig, ohne Backend.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chaostobimc/GorgiiBot.git"
+  },
+  "homepage": "https://github.com/chaostobimc/GorgiiBot#readme",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  }
+}
