@@ -194,7 +194,7 @@
 
   function spinLabel() {
     const view = GB.store.state.view;
-    return view === 'case' ? 'Case öffnen' : 'Rad drehen';
+    return view === 'roulette' ? 'Roulette starten' : 'Rad drehen';
   }
 
   // ---- Sound-Button ----

@@ -12,7 +12,7 @@
   const DEFAULTS = {
     theme: 'dark',          // 'dark' | 'light'
     channel: '',
-    view: 'wheel',          // 'wheel' | 'case'
+    view: 'wheel',          // 'wheel' | 'roulette'
     collectionOpen: true,
     settings: {
       mode: 'keywords',     // 'keywords' | 'all'

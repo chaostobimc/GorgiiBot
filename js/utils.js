@@ -70,7 +70,7 @@
     return a;
   }
 
-  /** Einfacher String-Hash (djb2) für Farben / Seltenheiten */
+  /** Einfacher String-Hash (djb2) für Farben u.ä. */
   function hashStr(s) {
     s = String(s || '');
     let h = 5381;

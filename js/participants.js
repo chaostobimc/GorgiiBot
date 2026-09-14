@@ -95,7 +95,7 @@
     return byLogin[String(login || '').toLowerCase()] || null;
   }
 
-  /** Stabile Reihenfolge für Rad & Case (Einfügereihenfolge) */
+  /** Stabile Reihenfolge für Rad & Roulette (Einfügereihenfolge) */
   function ordered() {
     return order.map(function (l) { return byLogin[l]; }).filter(Boolean);
   }
@@ -292,7 +292,7 @@
 
     // Zähler in der Kopfzeile aktualisieren
     if (GB.ui && GB.ui.updateStats) GB.ui.updateStats();
-    // Bühnen (Rad/Case) über neue Daten informieren
+    // Bühnen (Rad/Roulette) über neue Daten informieren
     if (GB.app && GB.app.refreshStages) GB.app.refreshStages();
   }
 
