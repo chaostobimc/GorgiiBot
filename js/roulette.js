@@ -1,9 +1,9 @@
 /* ============================================================================
- * GorgiiBot – case.js
- * CS2-Case-Opening: horizontale Kärtchen-Leiste mit Mittelmarker.
+ * GorgiiBot – roulette.js
+ * Roulette: horizontale Kärtchen-Leiste mit Mittelmarker.
  * Idle: langsamer Endlos-Loop. Spin: Ease-Out-Animation auf eine
  * vorbestimmte Gewinner-Position, Tick-Sound pro Kärtchen.
- * Seltenheitsfarben nur als schmale Oberkante (dezent).
+ * Kärtchen zeigen nur Avatar + Name (keine Seltenheiten o.ä.).
  * ========================================================================== */
 (function () {
   'use strict';
@@ -11,27 +11,6 @@
   const GB = (window.GB = window.GB || {});
   const REDUCED = window.matchMedia &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Seltenheitsstufen (Gewichtung + Farbe nur für die Oberkante)
-  const TIERS = [
-    { label: 'Standard',  color: '#8b949e', w: 40 },
-    { label: 'Selten',    color: '#58a6ff', w: 26 },
-    { label: 'Episch',    color: '#a371f7', w: 16 },
-    { label: 'Exotisch',  color: '#f778ba', w: 9 },
-    { label: 'Legende',   color: '#f85149', w: 6 },
-    { label: 'Mythisch',  color: '#d29922', w: 3 }
-  ];
-  const TOTAL_W = TIERS.reduce(function (a, t) { return a + t.w; }, 0);
-
-  function tierFor(login) {
-    const h = GB.util.hashStr(login) % TOTAL_W;
-    let acc = 0;
-    for (let i = 0; i < TIERS.length; i++) {
-      acc += TIERS[i].w;
-      if (h < acc) return TIERS[i];
-    }
-    return TIERS[0];
-  }
 
   const S = {
     viewport: null,
@@ -77,10 +56,9 @@
     if (S.mode === 'idle') buildIdle();
   }
 
-  /** Kärtchen-HTML für einen Teilnehmer */
+  /** Kärtchen-HTML für einen Teilnehmer (Avatar + Name) */
   function cardHTML(p, extraClass) {
     const U = GB.util;
-    const tier = tierFor(p.login);
     const bg = p.color && /^#[0-9a-f]{6}$/i.test(p.color) ? p.color : U.colorFor(p.login);
     const initial = U.esc(U.initials(p.display || p.login));
     let av;
@@ -90,18 +68,16 @@
     } else {
       av = '<span>' + initial + '</span>';
     }
-    return '<div class="case-card ' + (extraClass || '') + '">' +
-      '<span class="case-rar" style="background:' + tier.color + '"></span>' +
-      '<span class="case-avatar" style="background:' + U.esc(bg) + '">' + av + '</span>' +
-      '<span class="case-name">' + U.esc(p.display || p.login) + '</span>' +
-      '<span class="case-tier">' + U.esc(tier.label) + '</span>' +
+    return '<div class="rl-card ' + (extraClass || '') + '">' +
+      '<span class="rl-avatar" style="background:' + U.esc(bg) + '">' + av + '</span>' +
+      '<span class="rl-name">' + U.esc(p.display || p.login) + '</span>' +
+      '<span class="rl-login">' + U.esc(p.login) + '</span>' +
       '</div>';
   }
 
   /** Idle-Leiste: Set 2× rendern für nahtlosen Wrap */
   function buildIdle() {
     if (!S.track || S.mode !== 'idle') return;
-    const U = GB.util;
     const data = S.data;
     if (data.length < 2) {
       S.track.innerHTML = '';
@@ -190,7 +166,6 @@
         }
       }
       let html = '';
-      // Links etwas Vorlauf einplanen, damit der Start natürlich wirkt
       items.forEach(function (p, i) {
         html += cardHTML(p, i === winnerPos ? 'is-winner' : '');
       });
@@ -220,8 +195,6 @@
     const el = cards[S.winnerPos];
     if (el) {
       el.classList.add('landed');
-      // Nach kurzer Zeit Idle-Leiste wieder aufbauen (Highlight bleibt sichtbar,
-      // bis der nächste Spin startet oder sich die Daten ändern)
     }
   }
 
@@ -235,7 +208,7 @@
   function isSpinning() { return S.mode === 'spinning'; }
   function setIdle(on) { S.idleOn = !!on; }
 
-  GB.caseOp = {
+  GB.roulette = {
     init: init,
     setData: setData,
     spinTo: spinTo,

@@ -185,6 +185,51 @@
     updateTimerUI(S.totalMs);
     const sim = $('btnSimClaim');
     if (sim) sim.classList.toggle('hidden', false);
+    renderHistory();
+  }
+
+  /** Chat-Verlauf des Gewinners rechts neben dem Dialog rendern */
+  function renderHistory() {
+    const U = GB.util;
+    const p = S.participant;
+    const nameEl = $('wHistoryName');
+    if (nameEl) nameEl.textContent = p ? '@' + p.login : '–';
+    const list = $('wHistory');
+    if (!list) return;
+    const items = (p && GB.app && GB.app.userHistory) ? GB.app.userHistory(p.login) : [];
+    if (!items.length) {
+      list.innerHTML = '<div class="history-empty">Noch keine Nachrichten erfasst.<br>' +
+        'Meldet sich der Gewinner im Chat, erscheinen sie hier.</div>';
+      return;
+    }
+    list.innerHTML = items.map(function (m) {
+      return '<div class="history-item">' +
+        '<span class="history-time">' + U.esc(U.timeHM(m.ts)) + '</span>' +
+        '<span class="history-text">' + U.esc(m.text) + '</span></div>';
+    }).join('');
+    list.scrollTop = list.scrollHeight;
+  }
+
+  /** Neue Nachricht des Gewinners live ans Verlaufs-Panel anhängen */
+  function appendHistory(m) {
+    if (!S.active || !S.participant || !m || m.login !== S.participant.login) return;
+    const U = GB.util;
+    const list = $('wHistory');
+    if (!list) return;
+    const empty = list.querySelector('.history-empty');
+    if (empty) empty.remove();
+    const div = document.createElement('div');
+    div.className = 'history-item history-new';
+    const time = document.createElement('span');
+    time.className = 'history-time';
+    time.textContent = U.timeHM(m.ts);
+    const text = document.createElement('span');
+    text.className = 'history-text';
+    text.textContent = m.text;
+    div.appendChild(time);
+    div.appendChild(text);
+    list.appendChild(div);
+    list.scrollTop = list.scrollHeight;
   }
 
   function updateTimerUI(remainMs) {
@@ -248,6 +293,7 @@
     close: close,
     reset: reset,
     reopen: reopen,
+    appendHistory: appendHistory,
     isActive: isActive,
     isPending: isPending,
     current: current

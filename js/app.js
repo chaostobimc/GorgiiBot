@@ -36,8 +36,9 @@
     GB.pool.init(U.$('#roster'));
     GB.pool.restore(st.participants);
     GB.wheel.init('wheelCanvas');
-    GB.caseOp.init('caseViewport', 'caseTrack');
-    setView(st.view === 'case' ? 'case' : 'wheel', true);
+    GB.roulette.init('caseViewport', 'caseTrack');
+    // Migration: alter View-Wert 'case' heißt jetzt 'roulette'
+    setView((st.view === 'roulette' || st.view === 'case') ? 'roulette' : 'wheel', true);
 
     // UI mit gespeicherten Werten füllen
     bindControls();
@@ -64,27 +65,27 @@
     }
   }
 
-  // ---------------- Ansicht (Rad / Case) ----------------
+  // ---------------- Ansicht (Rad / Roulette) ----------------
 
   function setView(view, silent) {
     GB.store.state.view = view;
     if (!silent) GB.store.save();
     const isWheel = view === 'wheel';
     U.$('#tabWheel').classList.toggle('active', isWheel);
-    U.$('#tabCase').classList.toggle('active', !isWheel);
+    U.$('#tabRoulette').classList.toggle('active', !isWheel);
     U.$('#tabWheel').setAttribute('aria-selected', isWheel ? 'true' : 'false');
-    U.$('#tabCase').setAttribute('aria-selected', !isWheel ? 'true' : 'false');
+    U.$('#tabRoulette').setAttribute('aria-selected', !isWheel ? 'true' : 'false');
     U.$('#wheelWrap').classList.toggle('hidden', !isWheel);
-    U.$('#caseWrap').classList.toggle('hidden', isWheel);
+    U.$('#rlWrap').classList.toggle('hidden', isWheel);
     const emptyW = U.$('#wheelEmpty');
-    const emptyC = U.$('#caseEmpty');
+    const emptyC = U.$('#rlEmpty');
     const has = GB.pool.count() >= 2;
     if (emptyW) emptyW.classList.toggle('hidden', has);
     if (emptyC) emptyC.classList.toggle('hidden', has);
     // Größen nach Sichtbarkeitswechsel korrigieren
     window.requestAnimationFrame(function () {
       GB.wheel.resize();
-      if (!isWheel) GB.caseOp.backToIdle();
+      if (!isWheel) GB.roulette.backToIdle();
     });
     GB.ui.lockSpin(spinning || GB.winner.isPending(), GB.ui.spinLabel());
   }
@@ -93,10 +94,10 @@
   function refreshStages() {
     const list = GB.pool.ordered();
     GB.wheel.setData(list);
-    GB.caseOp.setData(list);
+    GB.roulette.setData(list);
     const has = list.length >= 2;
     const emptyW = U.$('#wheelEmpty');
-    const emptyC = U.$('#caseEmpty');
+    const emptyC = U.$('#rlEmpty');
     if (emptyW) emptyW.classList.toggle('hidden', has);
     if (emptyC) emptyC.classList.toggle('hidden', has);
   }
@@ -207,7 +208,7 @@
 
     GB.ui.log((isReroll ? 'Reroll' : 'Spin') + ' gestartet (' + list.length + ' Teilnehmer).', '');
 
-    const engine = st.view === 'case' ? GB.caseOp : GB.wheel;
+    const engine = st.view === 'roulette' ? GB.roulette : GB.wheel;
     engine.spinTo(winnerIdx, durMs).then(function () {
       spinning = false;
       GB.audio.win();
@@ -243,7 +244,7 @@
     }
     window.setTimeout(function () { GB.ui.claimBanner(false); }, 6000);
     GB.ui.lockSpin(false, GB.ui.spinLabel());
-    if (st.view === 'case') GB.caseOp.backToIdle();
+    if (st.view === 'roulette') GB.roulette.backToIdle();
   }
 
   function onClaimTimeout(p, manual) {
@@ -316,7 +317,7 @@
 
     // Tabs
     U.$('#tabWheel').addEventListener('click', function () { setView('wheel'); });
-    U.$('#tabCase').addEventListener('click', function () { setView('case'); });
+    U.$('#tabRoulette').addEventListener('click', function () { setView('roulette'); });
 
     // Spin
     U.$('#spinBtn').addEventListener('click', function () { doSpin(false); });
