@@ -11,6 +11,28 @@
 
   let spinning = false;
 
+  // Chat-Verlauf pro User (für das Verlaufs-Panel im Gewinner-Dialog)
+  const chatHistory = {};      // login -> [{text, ts}]
+  const HISTORY_PER_USER = 100;
+  const HISTORY_MAX_USERS = 3000;
+
+  function recordHistory(m) {
+    let arr = chatHistory[m.login];
+    if (!arr) {
+      const keys = Object.keys(chatHistory);
+      if (keys.length >= HISTORY_MAX_USERS) delete chatHistory[keys[0]];
+      arr = chatHistory[m.login] = [];
+    }
+    arr.push({ text: m.text, ts: m.ts });
+    if (arr.length > HISTORY_PER_USER) arr.shift();
+  }
+
+  /** Chronologischer Verlauf eines Users (Kopie) */
+  function userHistory(login) {
+    const arr = chatHistory[String(login || '').toLowerCase()];
+    return arr ? arr.slice() : [];
+  }
+
   // Demo-Namen für Tests ohne Twitch-Verbindung
   const DEMO_NAMES = [
     'Gorgii', 'PixelPanda', 'LunaPlays', 'NoScopeNina', 'Kaffeekrieger',
@@ -22,7 +44,10 @@
 
   // ---------------- Boot ----------------
 
+  let booted = false;
   function init() {
+    if (booted) return; // doppelte Initialisierung verhindern
+    booted = true;
     GB.store.load();
     const st = GB.store.state;
 
@@ -36,7 +61,7 @@
     GB.pool.init(U.$('#roster'));
     GB.pool.restore(st.participants);
     GB.wheel.init('wheelCanvas');
-    GB.roulette.init('caseViewport', 'caseTrack');
+    GB.roulette.init('rlViewport', 'rlTrack');
     // Migration: alter View-Wert 'case' heißt jetzt 'roulette'
     setView((st.view === 'roulette' || st.view === 'case') ? 'roulette' : 'wheel', true);
 
@@ -143,16 +168,24 @@
     const st = GB.store.state;
     st.stats.messages++;
     GB.store.save();
+    recordHistory(m);
 
     // 1) Gewinner-Claim prüfen (hat Vorrang vor allem)
     if (GB.winner.isPending()) {
       const w = GB.winner.current();
       if (w && m.login === w.login) {
         GB.ui.chatMessage(m, 'claim');
+        GB.winner.appendHistory(m);
         GB.winner.claim('chat');
         GB.ui.updateStats();
         return;
       }
+    }
+
+    // 1b) Weitere Nachrichten des Gewinners live ins Verlaufs-Panel spiegeln
+    if (GB.winner.isActive()) {
+      const w = GB.winner.current();
+      if (w && m.login === w.login) GB.winner.appendHistory(m);
     }
 
     // 2) Teilnahme versuchen
@@ -556,7 +589,8 @@
     init: init,
     setView: setView,
     refreshStages: refreshStages,
-    doSpin: doSpin
+    doSpin: doSpin,
+    userHistory: userHistory
   };
 
   document.addEventListener('DOMContentLoaded', init);
