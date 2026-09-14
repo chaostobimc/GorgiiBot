@@ -11,28 +11,6 @@
 
   let spinning = false;
 
-  // Chat-Verlauf pro User (für das Verlaufs-Panel im Gewinner-Dialog)
-  const chatHistory = {};      // login -> [{text, ts}]
-  const HISTORY_PER_USER = 100;
-  const HISTORY_MAX_USERS = 3000;
-
-  function recordHistory(m) {
-    let arr = chatHistory[m.login];
-    if (!arr) {
-      const keys = Object.keys(chatHistory);
-      if (keys.length >= HISTORY_MAX_USERS) delete chatHistory[keys[0]];
-      arr = chatHistory[m.login] = [];
-    }
-    arr.push({ text: m.text, ts: m.ts });
-    if (arr.length > HISTORY_PER_USER) arr.shift();
-  }
-
-  /** Chronologischer Verlauf eines Users (Kopie) */
-  function userHistory(login) {
-    const arr = chatHistory[String(login || '').toLowerCase()];
-    return arr ? arr.slice() : [];
-  }
-
   // Demo-Namen für Tests ohne Twitch-Verbindung
   const DEMO_NAMES = [
     'Gorgii', 'PixelPanda', 'LunaPlays', 'NoScopeNina', 'Kaffeekrieger',
@@ -44,10 +22,7 @@
 
   // ---------------- Boot ----------------
 
-  let booted = false;
   function init() {
-    if (booted) return; // doppelte Initialisierung verhindern
-    booted = true;
     GB.store.load();
     const st = GB.store.state;
 
@@ -61,9 +36,8 @@
     GB.pool.init(U.$('#roster'));
     GB.pool.restore(st.participants);
     GB.wheel.init('wheelCanvas');
-    GB.roulette.init('rlViewport', 'rlTrack');
-    // Migration: alter View-Wert 'case' heißt jetzt 'roulette'
-    setView((st.view === 'roulette' || st.view === 'case') ? 'roulette' : 'wheel', true);
+    GB.caseOp.init('caseViewport', 'caseTrack');
+    setView(st.view === 'case' ? 'case' : 'wheel', true);
 
     // UI mit gespeicherten Werten füllen
     bindControls();
@@ -90,27 +64,27 @@
     }
   }
 
-  // ---------------- Ansicht (Rad / Roulette) ----------------
+  // ---------------- Ansicht (Rad / Case) ----------------
 
   function setView(view, silent) {
     GB.store.state.view = view;
     if (!silent) GB.store.save();
     const isWheel = view === 'wheel';
     U.$('#tabWheel').classList.toggle('active', isWheel);
-    U.$('#tabRoulette').classList.toggle('active', !isWheel);
+    U.$('#tabCase').classList.toggle('active', !isWheel);
     U.$('#tabWheel').setAttribute('aria-selected', isWheel ? 'true' : 'false');
-    U.$('#tabRoulette').setAttribute('aria-selected', !isWheel ? 'true' : 'false');
+    U.$('#tabCase').setAttribute('aria-selected', !isWheel ? 'true' : 'false');
     U.$('#wheelWrap').classList.toggle('hidden', !isWheel);
-    U.$('#rlWrap').classList.toggle('hidden', isWheel);
+    U.$('#caseWrap').classList.toggle('hidden', isWheel);
     const emptyW = U.$('#wheelEmpty');
-    const emptyC = U.$('#rlEmpty');
+    const emptyC = U.$('#caseEmpty');
     const has = GB.pool.count() >= 2;
     if (emptyW) emptyW.classList.toggle('hidden', has);
     if (emptyC) emptyC.classList.toggle('hidden', has);
     // Größen nach Sichtbarkeitswechsel korrigieren
     window.requestAnimationFrame(function () {
       GB.wheel.resize();
-      if (!isWheel) GB.roulette.backToIdle();
+      if (!isWheel) GB.caseOp.backToIdle();
     });
     GB.ui.lockSpin(spinning || GB.winner.isPending(), GB.ui.spinLabel());
   }
@@ -119,10 +93,10 @@
   function refreshStages() {
     const list = GB.pool.ordered();
     GB.wheel.setData(list);
-    GB.roulette.setData(list);
+    GB.caseOp.setData(list);
     const has = list.length >= 2;
     const emptyW = U.$('#wheelEmpty');
-    const emptyC = U.$('#rlEmpty');
+    const emptyC = U.$('#caseEmpty');
     if (emptyW) emptyW.classList.toggle('hidden', has);
     if (emptyC) emptyC.classList.toggle('hidden', has);
   }
@@ -168,24 +142,16 @@
     const st = GB.store.state;
     st.stats.messages++;
     GB.store.save();
-    recordHistory(m);
 
     // 1) Gewinner-Claim prüfen (hat Vorrang vor allem)
     if (GB.winner.isPending()) {
       const w = GB.winner.current();
       if (w && m.login === w.login) {
         GB.ui.chatMessage(m, 'claim');
-        GB.winner.appendHistory(m);
         GB.winner.claim('chat');
         GB.ui.updateStats();
         return;
       }
-    }
-
-    // 1b) Weitere Nachrichten des Gewinners live ins Verlaufs-Panel spiegeln
-    if (GB.winner.isActive()) {
-      const w = GB.winner.current();
-      if (w && m.login === w.login) GB.winner.appendHistory(m);
     }
 
     // 2) Teilnahme versuchen
@@ -241,7 +207,7 @@
 
     GB.ui.log((isReroll ? 'Reroll' : 'Spin') + ' gestartet (' + list.length + ' Teilnehmer).', '');
 
-    const engine = st.view === 'roulette' ? GB.roulette : GB.wheel;
+    const engine = st.view === 'case' ? GB.caseOp : GB.wheel;
     engine.spinTo(winnerIdx, durMs).then(function () {
       spinning = false;
       GB.audio.win();
@@ -277,7 +243,7 @@
     }
     window.setTimeout(function () { GB.ui.claimBanner(false); }, 6000);
     GB.ui.lockSpin(false, GB.ui.spinLabel());
-    if (st.view === 'roulette') GB.roulette.backToIdle();
+    if (st.view === 'case') GB.caseOp.backToIdle();
   }
 
   function onClaimTimeout(p, manual) {
@@ -350,7 +316,7 @@
 
     // Tabs
     U.$('#tabWheel').addEventListener('click', function () { setView('wheel'); });
-    U.$('#tabRoulette').addEventListener('click', function () { setView('roulette'); });
+    U.$('#tabCase').addEventListener('click', function () { setView('case'); });
 
     // Spin
     U.$('#spinBtn').addEventListener('click', function () { doSpin(false); });
@@ -589,8 +555,7 @@
     init: init,
     setView: setView,
     refreshStages: refreshStages,
-    doSpin: doSpin,
-    userHistory: userHistory
+    doSpin: doSpin
   };
 
   document.addEventListener('DOMContentLoaded', init);
