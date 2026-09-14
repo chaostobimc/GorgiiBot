@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="description" content="GorgiiBot – interaktives Twitch-Giveaway-System: Glücksrad & Case-Opening, direkt im Browser.">
+  <title>GorgiiBot · Twitch Giveaway System</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23238636'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%230d1117'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <noscript>
+    <p style="padding:24px;text-align:center">GorgiiBot benötigt JavaScript.</p>
+  </noscript>
+
+  <!-- ================= Kopfzeile ================= -->
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <svg width="28" height="28" viewBox="0 0 32 32" aria-hidden="true">
+          <circle cx="16" cy="16" r="14" fill="none" stroke="#2ea043" stroke-width="3"/>
+          <path d="M16 2v28M2 16h28" stroke="#2ea043" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="16" cy="16" r="4.5" fill="#2ea043"/>
+        </svg>
+        <div class="brand-text">
+          <strong>GorgiiBot</strong>
+          <span>Giveaway System</span>
+        </div>
+      </div>
+
+      <div class="connect">
+        <span id="statusDot" class="dot" data-state="closed" title="Verbindungsstatus"></span>
+        <input type="text" id="channelInput" placeholder="twitch-kanalname …" autocomplete="off"
+               spellcheck="false" aria-label="Twitch-Kanalname">
+        <button id="connectBtn" class="btn btn-primary">Verbinden</button>
+        <span id="connLabel" class="conn-label">Getrennt</span>
+      </div>
+
+      <div class="top-actions">
+        <button id="soundBtn" class="icon-btn" title="Sound ausschalten (M)" aria-label="Sound umschalten">
+          <svg class="icon-sound-on" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 1.5v13l-4.5-4H1v-5h2.5L8 1.5zM11 5.5a3.5 3.5 0 010 5l-.8-.8a2.4 2.4 0 000-3.4l.8-.8zm1.4-2.2a6 6 0 010 9.4l-.8-.8a4.9 4.9 0 000-7.8l.8-.8z"/>
+          </svg>
+          <svg class="icon-sound-off hidden" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 1.5v13l-4.5-4H1v-5h2.5L8 1.5zM11.7 4.3l.7.7-1.4 1.4 1.4 1.4-.7.7-1.4-1.4-1.4 1.4-.7-.7 1.4-1.4-1.4-1.4.7-.7 1.4 1.4 1.4-1.4z"/>
+          </svg>
+        </button>
+        <button id="themeBtn" class="icon-btn" title="Zum hellen Modus" aria-label="Theme wechseln">
+          <svg class="icon-sun" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M8 1a.75.75 0 01.75.75v1a.75.75 0 01-1.5 0v-1A.75.75 0 018 1zm0 11a3 3 0 100-6 3 3 0 000 6zm-5.657-8.06a.75.75 0 011.06 0l.707.707a.75.75 0 11-1.06 1.061l-.707-.707a.75.75 0 010-1.061zm9.9 0a.75.75 0 010 1.06l-.708.708a.75.75 0 11-1.06-1.061l.707-.707a.75.75 0 011.061 0zM1.75 8a.75.75 0 01.75-.75h1a.75.75 0 010 1.5h-1a.75.75 0 01-.75-.75zm11.5 0a.75.75 0 01.75-.75h1a.75.75 0 010 1.5h-1a.75.75 0 01-.75-.75zM3.404 11.89a.75.75 0 011.06 0l.707.707a.75.75 0 11-1.06 1.061l-.707-.707a.75.75 0 010-1.061zm9.192 0a.75.75 0 010 1.06l-.707.708a.75.75 0 11-1.061-1.061l.707-.707a.75.75 0 011.061 0zM8 13.25a.75.75 0 01.75.75v1a.75.75 0 01-1.5 0v-1a.75.75 0 01.75-.75z"/>
+          </svg>
+          <svg class="icon-moon hidden" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path d="M13.5 8.5A5.5 5.5 0 017.5 2.5 5.5 5.5 0 1013.5 8.5zM8 1a7 7 0 107 7c0-.34-.03-.67-.07-1A5.5 5.5 0 019 2.07C9.33 2.03 9.66 2 10 2c-.34 0-.67-.03-1-.07A7 7 0 008 1z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+    <div class="statsbar">
+      <div class="statsbar-inner">
+        <span class="stat">Teilnehmer:<b id="statParticipants">0</b></span>
+        <span class="stat">Nachrichten:<b id="statMessages">0</b></span>
+        <span class="stat">Auslosungen:<b id="statSpins">0</b></span>
+        <span class="stat">Modus:<b id="statMode">–</b></span>
+        <span class="stat">Status:<b id="statStatus" data-state="closed">Offline</b></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= Hauptbereich ================= -->
+  <main class="layout">
+
+    <!-- ===== Linke Spalte: Steuerung & Einstellungen ===== -->
+    <aside class="col col-left">
+      <section class="card">
+        <div class="card-head"><h2>Teilnahme</h2></div>
+        <div class="card-body">
+          <div class="row">
+            <label class="switch">
+              <input type="checkbox" id="collectionToggle" checked>
+              <span class="switch-track"></span>
+              <span>Teilnahme geöffnet</span>
+            </label>
+          </div>
+          <div class="field">
+            <label>Teilnahme-Modus</label>
+            <label class="radio">
+              <input type="radio" name="mode" value="keywords" checked>
+              <span>Per Keyword<small>Nur Nachrichten mit Keyword nehmen teil (z.&nbsp;B. !giveaway)</small></span>
+            </label>
+            <label class="radio" style="margin-top:8px">
+              <input type="radio" name="mode" value="all">
+              <span>Alle Nachrichten<small>Jede Chat-Nachricht zählt (jeder User 1×)</small></span>
+            </label>
+          </div>
+          <div class="field" id="keywordsWrap">
+            <label for="keywordsInput">Keywords (kommagetrennt)</label>
+            <input type="text" id="keywordsInput" value="!giveaway" spellcheck="false" autocomplete="off">
+            <p class="hint">Die Nachricht muss mit dem Keyword beginnen.</p>
+          </div>
+          <div class="field hidden" id="ignoreCmdWrap">
+            <label class="check">
+              <input type="checkbox" id="ignoreCommands" checked>
+              <span>Befehle ignorieren<small>Nachrichten mit „!“ (außer Keywords) nicht werten</small></span>
+            </label>
+          </div>
+          <div class="field">
+            <label for="prizeInput">Gewinn / Preis (optional)</label>
+            <input type="text" id="prizeInput" placeholder="z. B. 10 € Steam-Guthaben" autocomplete="off">
+          </div>
+          <div class="field">
+            <button id="demoBtn" class="btn btn-block">+ 10 Demo-Teilnehmer</button>
+            <p class="hint">Zum Testen ohne Twitch-Verbindung.</p>
+          </div>
+          <div class="field">
+            <label for="manualInput">Manuell hinzufügen</label>
+            <div class="row">
+              <input type="text" id="manualInput" class="grow" placeholder="twitch-name" autocomplete="off" spellcheck="false">
+              <button id="manualAddBtn" class="btn">Hinzufügen</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Einstellungen</h2></div>
+        <div class="card-body">
+          <div class="field">
+            <label for="spinRange">Spin-Dauer</label>
+            <div class="range-row">
+              <input type="range" id="spinRange" min="3" max="20" step="1" value="8">
+              <output id="spinVal">8 s</output>
+            </div>
+          </div>
+          <div class="field">
+            <label for="claimRange">Claim-Timer (Gewinner-Bestätigung)</label>
+            <div class="range-row">
+              <input type="range" id="claimRange" min="10" max="300" step="5" value="60">
+              <output id="claimVal">60 s</output>
+            </div>
+            <p class="hint">Meldet sich der Gewinner nicht im Chat, folgt automatisch ein Reroll.</p>
+          </div>
+          <div class="field">
+            <label class="check">
+              <input type="checkbox" id="soundToggle" checked>
+              <span>Sound-Effekte</span>
+            </label>
+            <div class="range-row" style="margin-top:8px">
+              <input type="range" id="volumeRange" min="0" max="1" step="0.05" value="0.6" aria-label="Lautstärke">
+              <output id="volumeVal">60 %</output>
+            </div>
+            <div class="row" style="margin-top:8px">
+              <button id="soundTestBtn" class="btn">Test-Sound</button>
+            </div>
+          </div>
+          <div class="field">
+            <label for="banlistInput">Banliste (ein Name pro Zeile oder Komma)</label>
+            <textarea id="banlistInput" placeholder="name1&#10;name2" spellcheck="false"></textarea>
+            <label class="check" style="margin-top:8px">
+              <input type="checkbox" id="defaultBots" checked>
+              <span>Bekannte Bots automatisch ausschließen<small>Nightbot, StreamElements, Moobot u.&nbsp;v.&nbsp;m.</small></span>
+            </label>
+          </div>
+          <div class="field">
+            <label class="check">
+              <input type="checkbox" id="autoRemoveConfirmed" checked>
+              <span>Bestätigte Gewinner aus Pool entfernen</span>
+            </label>
+            <label class="check" style="margin-top:8px">
+              <input type="checkbox" id="autoRemoveTimeout" checked>
+              <span>Nicht gemeldete Gewinner entfernen<small>… und automatisch neu auslosen (Reroll)</small></span>
+            </label>
+            <label class="check" style="margin-top:8px">
+              <input type="checkbox" id="avatarsToggle" checked>
+              <span>Profilbilder laden<small>via decapi.me – Fallback: Initialen-Avatar</small></span>
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-head"><h2>Daten</h2></div>
+        <div class="card-body">
+          <div class="row">
+            <button id="exportCsvBtn" class="btn grow">CSV exportieren</button>
+            <button id="exportJsonBtn" class="btn grow">JSON exportieren</button>
+          </div>
+          <div class="row">
+            <label for="importFile" class="btn grow" style="text-align:center;cursor:pointer">JSON importieren</label>
+            <input type="file" id="importFile" accept="application/json,.json" class="hidden">
+          </div>
+          <button id="resetBtn" class="btn btn-danger btn-block">Liste &amp; Zähler zurücksetzen</button>
+        </div>
+      </section>
+    </aside>
+
+    <!-- ===== Mitte: Bühne & Feed ===== -->
+    <section class="col col-center">
+      <section class="card">
+        <div class="tabs" role="tablist">
+          <button id="tabWheel" class="tab active" role="tab" aria-selected="true">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 1a7 7 0 100 14A7 7 0 008 1zm0 1.5V8L4.7 4.7a5.5 5.5 0 013.3-2.2zm0 11v-3.3a.75.75 0 00-1.28-.53L4.4 11.5a5.47 5.47 0 003.6 1zm1.5-5.25V12.5a5.5 5.5 0 000-8.25v4a.75.75 0 000 0z" opacity="0.9"/></svg>
+            Glücksrad
+          </button>
+          <button id="tabCase" class="tab" role="tab" aria-selected="false">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M2 3.5h4.5v9H2v-9zm5.25 0H12v9H7.25v-9zM12.75 3.5H14v9h-1.25v-9zM1.25 2.75h13.5v10.5H1.25V2.75z" opacity="0.9"/></svg>
+            Case Opening
+          </button>
+        </div>
+        <div class="stage">
+          <div id="wheelWrap">
+            <div class="wheel-pointer" aria-hidden="true"></div>
+            <canvas id="wheelCanvas" width="480" height="480"></canvas>
+            <div id="wheelEmpty" class="stage-empty">Noch keine Teilnehmer – Chat verbinden oder Demo-Daten nutzen</div>
+          </div>
+          <div id="caseWrap" class="hidden">
+            <div class="case-viewport" id="caseViewport">
+              <div class="case-track" id="caseTrack"></div>
+              <div class="case-marker" aria-hidden="true"></div>
+            </div>
+            <div id="caseEmpty" class="stage-empty" style="position:static">Noch keine Teilnehmer – Chat verbinden oder Demo-Daten nutzen</div>
+          </div>
+
+          <div id="claimBanner" class="claim-banner hidden" title="Gewinner anzeigen">
+            <div class="claim-top">
+              <span id="claimText">Warte auf Gewinner …</span>
+              <span class="spacer"></span>
+              <span id="claimSecs" class="claim-secs"></span>
+            </div>
+            <div class="progress"><span id="claimBar" style="width:100%"></span></div>
+          </div>
+
+          <div class="spin-row">
+            <button id="spinBtn" class="btn btn-primary btn-big"><span>Rad drehen</span></button>
+            <button id="rerollBtn" class="btn" disabled>Reroll</button>
+          </div>
+          <div class="kbd-hint"><kbd>Leertaste</kbd> drehen · <kbd>M</kbd> Sound · <kbd>T</kbd> Theme</div>
+          <div id="stageStatus" class="stage-status" data-kind="">Bereit.</div>
+        </div>
+        <div id="lastWinner" class="last-winner hidden">Letzter Gewinner: <b id="lastWinnerText"></b></div>
+      </section>
+
+      <section class="card">
+        <div class="tabs" role="tablist">
+          <button id="feedTabChat" class="tab active" role="tab">Chat live</button>
+          <button id="feedTabLog" class="tab" role="tab">Verlauf</button>
+        </div>
+        <div class="card-body tight">
+          <div id="chatFeed" class="feed-list"></div>
+          <div id="chatEmpty" class="feed-empty">Noch keine Nachrichten – verbinde einen Twitch-Kanal.</div>
+          <div id="activityLog" class="feed-list hidden"></div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ===== Rechte Spalte: Teilnehmer ===== -->
+    <aside class="col col-right">
+      <section class="card">
+        <div class="card-head">
+          <h2>Teilnehmer</h2>
+          <span class="spacer"></span>
+          <span id="rosterCount">0 Teilnehmer</span>
+        </div>
+        <div class="roster-tools">
+          <input type="search" id="rosterSearch" placeholder="Suchen …" autocomplete="off" aria-label="Teilnehmer suchen">
+          <select id="rosterSort" aria-label="Sortierung">
+            <option value="newest">Neueste</option>
+            <option value="oldest">Älteste</option>
+            <option value="az">A–Z</option>
+          </select>
+        </div>
+        <div id="roster" class="roster"></div>
+        <div id="rosterEmpty" class="roster-empty">
+          Leer – Teilnehmer kommen über den Chat<br>oder den Demo-Button herein.
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <footer class="footer">
+    GorgiiBot · Läuft komplett clientseitig in deinem Browser – Chat via Twitch WebSocket, Avatare optional via decapi.me
+  </footer>
+
+  <!-- ================= Gewinner-Modal ================= -->
+  <div id="winnerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="wName">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>Giveaway-Gewinner</h2>
+        <span class="spacer"></span>
+        <button id="modalClose" class="icon-btn" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="winner-crown">Gewinner</div>
+        <div id="wAvatar"></div>
+        <p class="winner-name" id="wName">–</p>
+        <p class="winner-login mono" id="wLogin">–</p>
+        <span id="wRerollTag" class="tag-reroll hidden">Reroll</span>
+        <div id="wPrizeRow" class="winner-prize hidden">Gewinn: <b id="wPrize"></b></div>
+        <div class="winner-timer" id="wTimerText">60 s</div>
+        <div class="progress winner-progress"><span id="wTimerBar" style="width:100%"></span></div>
+        <div class="winner-status" id="wStatus" data-kind="pending">Warte auf Bestätigung …</div>
+      </div>
+      <div class="modal-foot">
+        <button id="btnCloseWinner" class="btn">Schließen</button>
+        <button id="btnRerollNow" class="btn">Reroll starten</button>
+        <button id="btnSimClaim" class="link-btn">Claim simulieren (Test ohne Chat)</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toasts" aria-live="polite"></div>
+
+  <!-- Module (klassische Scripts: läuft auch per file:// ohne Server) -->
+  <script src="js/utils.js" defer></script>
+  <script src="js/audio.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/twitch.js" defer></script>
+  <script src="js/participants.js" defer></script>
+  <script src="js/wheel.js" defer></script>
+  <script src="js/case.js" defer></script>
+  <script src="js/winner.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/app.js" defer></script>
+</body>
+</html>
