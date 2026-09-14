@@ -29,6 +29,15 @@ python3 -m http.server 8080
    (Standard 60 s) im Chat melden. Sonst startet automatisch ein **Reroll**
    aus den verbleibenden Teilnehmern.
 
+## OBS-Overlay
+
+Über den Button **OBS-Overlay** (unter der Bühne) erhältst du eine URL für eine
+transparente Browserquelle (`overlay.html`): nur Glücksrad oder Case Opening,
+kompaktes Gewinner-Banner und Spin-Button. Die URL enthält Kanal, Modus,
+Keywords und Zeiten als Parameter. Das Overlay liest denselben Twitch-Chat und
+baut seinen eigenen Pool – daher vor Giveaway-Start öffnen. Gedreht wird im
+Overlay (OBS: Rechtsklick → Interagieren, oder Leertaste im Overlay-Tab).
+
 ## Funktionen
 
 - 🎡 **Glücksrad** (Canvas, Ease-Out-Physik, Idle-Rotation, Tick-Sounds)
@@ -46,6 +55,7 @@ python3 -m http.server 8080
 
 ```
 index.html          – Layout (Header, Steuerung, Bühne, Teilnehmer, Modal)
+overlay.html        – Transparente OBS-Seite (nur Bühne + Gewinner-Banner)
 css/styles.css      – GitHub-Theme via CSS-Variablen (Dark & Light)
 js/utils.js         – Helfer (DOM, Zufall, Format, Download)
 js/audio.js         – Web-Audio-Sounds (Tick, Win, Claim, Timeout, Beep)
@@ -57,6 +67,8 @@ js/case.js          – Case-Opening-Engine (Roulette + Idle-Loop)
 js/winner.js        – Gewinner-Modal + Claim-Timer + Auto-Reroll
 js/ui.js            – Theme, Toasts, Chat-Feed, Log, Statistiken
 js/app.js           – Orchestrierung & Event-Verdrahtung
+js/overlay.js       – Overlay-Logik (eigener Pool, Spin, Claim-Banner)
+js/obs.js           – OBS-Knopf: Dialog + Overlay-URL erzeugen
 ```
 
 ## Datenschutz

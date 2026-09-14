@@ -233,6 +233,7 @@
           <div class="spin-row">
             <button id="spinBtn" class="btn btn-primary btn-big"><span>Rad drehen</span></button>
             <button id="rerollBtn" class="btn" disabled>Reroll</button>
+            <button id="obsBtn" class="btn" title="Glücksrad / Case Opening als OBS-Browserquelle einrichten">OBS-Overlay</button>
           </div>
           <div class="kbd-hint"><kbd>Leertaste</kbd> drehen · <kbd>M</kbd> Sound · <kbd>T</kbd> Theme</div>
           <div id="stageStatus" class="stage-status" data-kind="">Bereit.</div>
@@ -281,6 +282,39 @@
     GorgiiBot · Läuft komplett clientseitig in deinem Browser – Chat via Twitch WebSocket, Avatare optional via decapi.me
   </footer>
 
+  <!-- ================= OBS-Dialog ================= -->
+  <div id="obsModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="obsTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2 id="obsTitle">OBS Browser-Quelle</h2>
+        <span class="spacer"></span>
+        <button id="obsClose" class="icon-btn" aria-label="Schließen">×</button>
+      </div>
+      <div class="modal-body obs-body">
+        <div class="field">
+          <label>Ansicht fürs Overlay</label>
+          <div class="row">
+            <label class="radio"><input type="radio" name="obsView" value="wheel" checked><span>Glücksrad</span></label>
+            <label class="radio"><input type="radio" name="obsView" value="case"><span>Case Opening</span></label>
+          </div>
+        </div>
+        <div class="field">
+          <label for="obsUrl">Overlay-URL (enthält Kanal, Modus, Keywords &amp; Zeiten)</label>
+          <div class="row">
+            <input type="text" id="obsUrl" class="grow mono" readonly>
+            <button id="obsCopy" class="btn btn-primary">Kopieren</button>
+          </div>
+          <p class="hint">Tipp: Overlay vor Giveaway-Start öffnen – es baut seinen Pool aus dem Live-Chat.</p>
+        </div>
+        <ol class="obs-guide">
+          <li>OBS: Quellen <b>+</b> → <b>Browser</b> → neue Quelle erstellen.</li>
+          <li>URL einfügen, Breite <b>900</b>, Höhe <b>700</b> (ggf. anpassen).</li>
+          <li>Gedreht wird im Overlay: Rechtsklick → <b>Interagieren</b> → Drehen (oder <kbd>Leertaste</kbd> im geöffneten Overlay-Tab).</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= Gewinner-Modal ================= -->
   <div id="winnerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="wName">
     <div class="modal-card">
@@ -321,5 +355,6 @@
   <script src="js/winner.js" defer></script>
   <script src="js/ui.js" defer></script>
   <script src="js/app.js" defer></script>
+  <script src="js/obs.js" defer></script>
 </body>
 </html>

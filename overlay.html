@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="GorgiiBot Overlay – Glücksrad / Case Opening als transparente OBS-Browserquelle.">
+  <title>GorgiiBot Overlay</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23238636'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%230d1117'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/styles.css">
+  <style>
+    /* Overlay: transparenter Hintergrund, nur Bühne + kompakte Infos */
+    html, body { background: transparent !important; }
+    body { min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .ov-wrap {
+      width: 100%;
+      max-width: 880px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+    #wheelWrap, #caseWrap { width: 100%; }
+    #wheelWrap { display: flex; justify-content: center; position: relative; }
+    /* Kompaktes Gewinner-Banner */
+    .ov-winner {
+      width: 100%;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      box-shadow: var(--shadow-lg);
+      padding: 10px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .ov-winner-top { display: flex; align-items: center; gap: 10px; }
+    .ov-winner-names { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+    .ov-winner-names b { font-size: 16px; }
+    .ov-winner-names .mono { font-size: 12px; color: var(--muted); }
+    .ov-winner-top .spacer { flex: 1; }
+    .ov-prize { font-size: 12px; color: var(--muted); }
+    #ovSecs { font-size: 18px; font-variant-numeric: tabular-nums; }
+    .ov-progress { height: 6px; }
+    .ov-win-status { font-size: 13px; color: var(--muted); }
+    .ov-win-status[data-kind="ok"] { color: var(--accent-hover); font-weight: 600; }
+    .ov-win-status[data-kind="timeout"] { color: var(--warn); font-weight: 600; }
+    /* Mini-Steuerleiste */
+    .ov-bar {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .ov-bar .btn { flex-shrink: 0; }
+    #ovStatus { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    #ovCount {
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      padding: 1px 10px;
+      font-size: 12px;
+      flex-shrink: 0;
+      background: var(--card);
+    }
+  </style>
+</head>
+<body>
+  <noscript>
+    <p style="padding:24px;text-align:center">GorgiiBot Overlay benötigt JavaScript.</p>
+  </noscript>
+
+  <main class="ov-wrap">
+    <div id="wheelWrap">
+      <div class="wheel-pointer" aria-hidden="true"></div>
+      <canvas id="wheelCanvas" width="480" height="480"></canvas>
+      <div id="wheelEmpty" class="stage-empty">Warte auf Teilnehmer …</div>
+    </div>
+
+    <div id="caseWrap" class="hidden">
+      <div class="case-viewport" id="caseViewport">
+        <div class="case-track" id="caseTrack"></div>
+        <div class="case-marker" aria-hidden="true"></div>
+      </div>
+      <div id="caseEmpty" class="stage-empty" style="position:static">Warte auf Teilnehmer …</div>
+    </div>
+
+    <div id="ovWinner" class="ov-winner hidden">
+      <div class="ov-winner-top">
+        <span id="ovAvatar"></span>
+        <span class="ov-winner-names">
+          <b id="ovName">–</b>
+          <span id="ovLogin" class="mono">–</span>
+        </span>
+        <span class="spacer"></span>
+        <span id="ovPrize" class="ov-prize"></span>
+        <b id="ovSecs"></b>
+      </div>
+      <div class="progress ov-progress"><span id="ovBar" style="width:100%"></span></div>
+      <div id="ovWinStatus" class="ov-win-status" data-kind="pending">Warte auf Bestätigung …</div>
+    </div>
+
+    <div class="ov-bar">
+      <button id="ovSpin" class="btn btn-primary"><span>Drehen</span></button>
+      <span id="ovStatus">Starte …</span>
+      <span id="ovCount" class="mono" title="Teilnehmer">0</span>
+    </div>
+  </main>
+
+  <!-- Dieselben Module wie die Hauptapp (außer app.js) -->
+  <script src="js/utils.js" defer></script>
+  <script src="js/audio.js" defer></script>
+  <script src="js/store.js" defer></script>
+  <script src="js/twitch.js" defer></script>
+  <script src="js/participants.js" defer></script>
+  <script src="js/wheel.js" defer></script>
+  <script src="js/case.js" defer></script>
+  <script src="js/winner.js" defer></script>
+  <script src="js/ui.js" defer></script>
+  <script src="js/overlay.js" defer></script>
+</body>
+</html>

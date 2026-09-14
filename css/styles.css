@@ -699,6 +699,21 @@ kbd {
 }
 .modal-foot .link-btn { width: 100%; text-align: center; margin-top: 2px; }
 
+/* OBS-Dialog */
+.obs-body { align-items: stretch; text-align: left; gap: 14px; }
+.obs-body .radio { margin-right: 16px; }
+#obsUrl { font-size: 12px; }
+.obs-guide {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.obs-guide b { color: var(--text); }
+
 /* ---------------- Toasts ---------------- */
 
 #toasts {
