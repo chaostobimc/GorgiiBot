@@ -11,6 +11,28 @@
 
   let spinning = false;
 
+  // Chat-Verlauf pro User (für das Verlaufs-Panel im Gewinner-Dialog)
+  const chatHistory = {};      // login -> [{text, ts}]
+  const HISTORY_PER_USER = 100;
+  const HISTORY_MAX_USERS = 3000;
+
+  function recordHistory(m) {
+    let arr = chatHistory[m.login];
+    if (!arr) {
+      const keys = Object.keys(chatHistory);
+      if (keys.length >= HISTORY_MAX_USERS) delete chatHistory[keys[0]];
+      arr = chatHistory[m.login] = [];
+    }
+    arr.push({ text: m.text, ts: m.ts });
+    if (arr.length > HISTORY_PER_USER) arr.shift();
+  }
+
+  /** Chronologischer Verlauf eines Users (Kopie) */
+  function userHistory(login) {
+    const arr = chatHistory[String(login || '').toLowerCase()];
+    return arr ? arr.slice() : [];
+  }
+
   // Demo-Namen für Tests ohne Twitch-Verbindung
   const DEMO_NAMES = [
     'Gorgii', 'PixelPanda', 'LunaPlays', 'NoScopeNina', 'Kaffeekrieger',
@@ -43,6 +65,7 @@
     // UI mit gespeicherten Werten füllen
     bindControls();
     applySettingsToUI();
+    GB.ui.initCollapse();
 
     // Twitch-Events
     GB.twitch.on('status', onConnStatus);
@@ -143,16 +166,24 @@
     const st = GB.store.state;
     st.stats.messages++;
     GB.store.save();
+    recordHistory(m);
 
     // 1) Gewinner-Claim prüfen (hat Vorrang vor allem)
     if (GB.winner.isPending()) {
       const w = GB.winner.current();
       if (w && m.login === w.login) {
         GB.ui.chatMessage(m, 'claim');
+        GB.winner.appendHistory(m);
         GB.winner.claim('chat');
         GB.ui.updateStats();
         return;
       }
+    }
+
+    // 1b) Weitere Nachrichten des Gewinners live ins Verlaufs-Panel spiegeln
+    if (GB.winner.isActive()) {
+      const w = GB.winner.current();
+      if (w && m.login === w.login) GB.winner.appendHistory(m);
     }
 
     // 2) Teilnahme versuchen
@@ -191,6 +222,7 @@
       return;
     }
     GB.audio.ensure();
+    if (GB.confetti) GB.confetti.stop();
     GB.winner.reset();
     GB.ui.claimBanner(false);
     spinning = true;
@@ -212,6 +244,7 @@
     engine.spinTo(winnerIdx, durMs).then(function () {
       spinning = false;
       GB.audio.win();
+      if (GB.confetti) GB.confetti.celebrate();
       GB.ui.stageStatus('Gewinner: ' + winner.display + ' – warte auf Bestätigung …', 'win');
       GB.ui.log('Gewinner gezogen: ' + winner.display + ' (@' + winner.login + ').', 'ok');
       GB.winner.start(winner, { isReroll: isReroll, claimSeconds: st.settings.claimSeconds });
@@ -440,6 +473,7 @@
     U.$('#resetBtn').addEventListener('click', function () {
       if (!window.confirm('Wirklich alle Teilnehmer und Zähler zurücksetzen?')) return;
       GB.winner.reset();
+      if (GB.confetti) GB.confetti.stop();
       GB.pool.clear();
       GB.store.resetData();
       GB.ui.lastWinner('');
@@ -564,7 +598,8 @@
     init: init,
     setView: setView,
     refreshStages: refreshStages,
-    doSpin: doSpin
+    doSpin: doSpin,
+    userHistory: userHistory
   };
 
   document.addEventListener('DOMContentLoaded', init);

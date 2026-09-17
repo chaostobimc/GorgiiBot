@@ -41,7 +41,7 @@ window.matchMedia = window.matchMedia || (() => ({ matches: false }));
 window.fetch = () => Promise.resolve({ text: () => Promise.resolve('not-a-url') });
 
 const files = ['utils', 'audio', 'store', 'twitch', 'participants', 'wheel',
-  'roulette', 'winner', 'ui', 'app', 'obs'];
+  'roulette', 'winner', 'ui', 'confetti', 'app', 'obs'];
 for (const f of files) {
   const code = fs.readFileSync(path.join(DIR, 'js', f + '.js'), 'utf8');
   try {
@@ -118,8 +118,12 @@ function assert(name, cond, extra) {
   assert('Spin läuft', window.GB.wheel.isSpinning());
   await sleep(3200); // Spin beenden lassen
   assert('Gewinner-Modal offen', !$('#winnerModal').classList.contains('hidden'));
+  assert('Konfetti aktiv', !!$('#confetti'));
   assert('Gewinner gesetzt', !!GB.winner.current(), '');
   assert('Claim-Timer läuft', GB.winner.isPending());
+  GB.winner.appendHistory({ login: GB.winner.current().login, text: 'Juhu, gewonnen!', ts: Date.now() });
+  assert('Verlauf zeigt Nachricht', $('#wHistory').textContent.includes('Juhu'));
+  assert('Verlauf zeigt User', $('#wHistoryName').textContent.includes(GB.winner.current().login));
   GB.winner.claim('test');
   assert('Claim bestätigt', !GB.winner.isPending());
 
@@ -130,8 +134,10 @@ function assert(name, cond, extra) {
   $('#spinBtn').click();
   await sleep(400);
   assert('Roulette-Spin läuft', GB.roulette.isSpinning());
+  assert('Kein Pre-Marking beim Spin', doc.querySelectorAll('.rl-card.is-winner').length === 0);
   await sleep(3200);
   assert('Roulette-Gewinner gezogen', !!GB.winner.current());
+  assert('Gewinner landet markiert', doc.querySelectorAll('.rl-card.landed').length === 1);
 
   // Timeout -> Auto-Reroll (Timer kurz)
   GB.winner.reset();
@@ -162,6 +168,14 @@ function assert(name, cond, extra) {
   swGreen.click();
   await sleep(50);
   assert('Akzent zurückgesetzt', doc.documentElement.getAttribute('data-accent') === 'green');
+
+  // Einklappbare Karten
+  const collapseBtn = doc.querySelector('[data-collapse="cardEntry"]');
+  collapseBtn.click();
+  assert('Karte einklappbar', $('#cardEntry').classList.contains('collapsed'));
+  collapseBtn.click();
+  assert('Karte ausklappbar', !$('#cardEntry').classList.contains('collapsed'));
+  assert('Collapse gespeichert', typeof GB.store.state.collapsedCards === 'object');
 
   console.log(`\nFEHLER GESAMMELT: ${errors.length}`);
   errors.slice(0, 10).forEach((e) => console.log('---', e.split('\n').slice(0, 4).join('\n')));

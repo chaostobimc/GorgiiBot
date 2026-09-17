@@ -48,7 +48,7 @@ global.document = {
 global.location = { protocol: 'http:' };
 
 const files = ['utils', 'audio', 'store', 'twitch', 'participants', 'wheel',
-  'roulette', 'winner', 'ui', 'app'];
+  'roulette', 'winner', 'ui', 'confetti', 'app'];
 for (const f of files) {
   const code = fs.readFileSync(path.join(JS_DIR, f + '.js'), 'utf8');
   vm.runInThisContext(code, { filename: f + '.js' });
@@ -88,6 +88,17 @@ assert('accent gesetzt', global.document.documentElement.getAttribute('data-acce
 GB.ui.applyAccent('pink');
 assert('accent fallback green', global.document.documentElement.getAttribute('data-accent') === 'green');
 GB.ui.applyAccent('green');
+
+// --- Verlauf / Konfetti / Collapse (API + Guards) ---
+assert('confetti API', !!GB.confetti && typeof GB.confetti.celebrate === 'function');
+GB.confetti.stop();
+assert('confetti stop ok', true);
+assert('appendHistory API', typeof GB.winner.appendHistory === 'function');
+GB.winner.appendHistory({ login: 'x', text: 'y', ts: Date.now() });
+assert('appendHistory inaktiv ok', true);
+assert('userHistory leer', GB.app.userHistory('alice').length === 0);
+GB.ui.initCollapse();
+assert('initCollapse ok', typeof GB.store.state.collapsedCards === 'object');
 
 // --- Pool-Regeln ---
 GB.pool.clear();

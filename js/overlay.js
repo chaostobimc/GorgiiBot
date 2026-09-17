@@ -184,6 +184,7 @@
       setStatus('Noch zu wenige Teilnehmer (' + list.length + '/2).');
       return;
     }
+    if (GB.confetti) GB.confetti.stop();
     GB.winner.reset();
     hideWinner();
     spinning = true;
@@ -196,6 +197,7 @@
     engine.spinTo(idx, cfg.spinSeconds * 1000).then(function () {
       spinning = false;
       GB.audio.win();
+      if (GB.confetti) GB.confetti.celebrate();
       showWinner(winner, isReroll);
       GB.winner.start(winner, { isReroll: isReroll, claimSeconds: cfg.claimSeconds });
       // Spin-Button bleibt bis Claim/Timeout gesperrt

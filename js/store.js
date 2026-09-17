@@ -14,6 +14,7 @@
     channel: '',
     view: 'wheel',          // 'wheel' | 'roulette'
     collectionOpen: true,
+    collapsedCards: {},   // eingeklappte Karten links (id -> true)
     settings: {
       mode: 'keywords',     // 'keywords' | 'all'
       keywords: ['!giveaway'],
@@ -72,6 +73,7 @@
     const st = GB.store.state;
     if (!Array.isArray(st.settings.keywords)) st.settings.keywords = ['!giveaway'];
     if (['green', 'blue', 'purple', 'orange'].indexOf(st.settings.accent) === -1) st.settings.accent = 'green';
+    if (!st.collapsedCards || typeof st.collapsedCards !== 'object') st.collapsedCards = {};
     if (!Array.isArray(st.participants)) st.participants = [];
     // Nur plausible Teilnehmer übernehmen (max. 5000)
     st.participants = st.participants

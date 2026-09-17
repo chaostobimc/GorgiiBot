@@ -72,8 +72,8 @@
 
     <!-- ===== Linke Spalte: Steuerung & Einstellungen ===== -->
     <aside class="col col-left">
-      <section class="card">
-        <div class="card-head"><h2>Teilnahme</h2></div>
+      <section class="card" id="cardEntry">
+        <div class="card-head"><button class="collapse-btn" data-collapse="cardEntry" aria-expanded="true" aria-label="Bereich ein-/ausklappen"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4.5 6.5 8 10l3.5-3.5-.75-.75L8 8.5 5.25 5.75z"/></svg></button><h2>Teilnahme</h2></div>
         <div class="card-body">
           <div class="row">
             <label class="switch">
@@ -122,8 +122,8 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-head"><h2>Einstellungen</h2></div>
+      <section class="card" id="cardSettings">
+        <div class="card-head"><button class="collapse-btn" data-collapse="cardSettings" aria-expanded="true" aria-label="Bereich ein-/ausklappen"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4.5 6.5 8 10l3.5-3.5-.75-.75L8 8.5 5.25 5.75z"/></svg></button><h2>Einstellungen</h2></div>
         <div class="card-body">
           <div class="field">
             <label for="spinRange">Spin-Dauer</label>
@@ -187,8 +187,8 @@
         </div>
       </section>
 
-      <section class="card">
-        <div class="card-head"><h2>Daten</h2></div>
+      <section class="card" id="cardData">
+        <div class="card-head"><button class="collapse-btn" data-collapse="cardData" aria-expanded="true" aria-label="Bereich ein-/ausklappen"><svg viewBox="0 0 16 16" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M4.5 6.5 8 10l3.5-3.5-.75-.75L8 8.5 5.25 5.75z"/></svg></button><h2>Daten</h2></div>
         <div class="card-body">
           <div class="row">
             <button id="exportCsvBtn" class="btn grow">CSV exportieren</button>
@@ -326,7 +326,8 @@
 
   <!-- ================= Gewinner-Modal ================= -->
   <div id="winnerModal" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="wName">
-    <div class="modal-card">
+    <div class="modal-card modal-wide">
+      <div class="modal-main">
       <div class="modal-head">
         <h2>Giveaway-Gewinner</h2>
         <span class="spacer"></span>
@@ -348,6 +349,11 @@
         <button id="btnRerollNow" class="btn">Reroll starten</button>
         <button id="btnSimClaim" class="link-btn">Claim simulieren (Test ohne Chat)</button>
       </div>
+      </div>
+      <aside class="modal-side" aria-label="Chat-Verlauf des Gewinners">
+        <div class="modal-side-head">Chat-Verlauf · <span id="wHistoryName" class="mono">–</span></div>
+        <div id="wHistory" class="history-list"></div>
+      </aside>
     </div>
   </div>
 
@@ -363,6 +369,7 @@
   <script src="js/roulette.js" defer></script>
   <script src="js/winner.js" defer></script>
   <script src="js/ui.js" defer></script>
+  <script src="js/confetti.js" defer></script>
   <script src="js/app.js" defer></script>
   <script src="js/obs.js" defer></script>
 </body>

@@ -168,7 +168,7 @@
       let html = '';
       // Links etwas Vorlauf einplanen, damit der Start natürlich wirkt
       items.forEach(function (p, i) {
-        html += cardHTML(p, i === winnerPos ? 'is-winner' : '');
+        html += cardHTML(p, ''); // absichtlich ohne Markierung (Spannung!)
       });
       S.track.innerHTML = html;
 

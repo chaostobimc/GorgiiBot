@@ -222,10 +222,35 @@
     if (sOff) sOff.classList.toggle('hidden', on);
   }
 
+  /** Einklapp-Knöpfe der linken Karten verdrahten + Zustand wiederherstellen */
+  function initCollapse() {
+    const st = GB.store.state;
+    if (!st.collapsedCards || typeof st.collapsedCards !== 'object') st.collapsedCards = {};
+    const collapsed = st.collapsedCards;
+    U.$$('.collapse-btn').forEach(function (btn) {
+      const id = btn.getAttribute('data-collapse');
+      const card = id && document.getElementById(id);
+      if (!card) return;
+      const apply = function () {
+        const isCollapsed = !!collapsed[id];
+        card.classList.toggle('collapsed', isCollapsed);
+        btn.setAttribute('aria-expanded', isCollapsed ? 'false' : 'true');
+      };
+      apply();
+      btn.addEventListener('click', function () {
+        if (collapsed[id]) delete collapsed[id];
+        else collapsed[id] = true;
+        GB.store.save();
+        apply();
+      });
+    });
+  }
+
   GB.ui = {
     applyTheme: applyTheme,
     toggleTheme: toggleTheme,
     applyAccent: applyAccent,
+    initCollapse: initCollapse,
     toast: toast,
     log: log,
     chatMessage: chatMessage,

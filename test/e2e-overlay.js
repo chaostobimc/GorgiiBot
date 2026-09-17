@@ -35,7 +35,7 @@ function makeCtx(search) {
   window.matchMedia = window.matchMedia || (() => ({ matches: false }));
   window.fetch = () => Promise.resolve({ text: () => Promise.resolve('not-a-url') });
   const files = ['utils', 'audio', 'store', 'twitch', 'participants', 'wheel',
-    'roulette', 'winner', 'ui', 'overlay'];
+    'roulette', 'winner', 'ui', 'confetti', 'overlay'];
   for (const f of files) {
     window.eval(fs.readFileSync(path.join(DIR, 'js', f + '.js'), 'utf8') + `\n//# sourceURL=${f}.js`);
   }
@@ -93,6 +93,7 @@ async function testView(view) {
   assert('Spin läuft', spinning);
   await sleep(3200);
   assert('Gewinner-Banner sichtbar', !$('#ovWinner').classList.contains('hidden'));
+  assert('Konfetti aktiv', !!$('#confetti'));
   assert('Gewinner-Name gesetzt', $('#ovName').textContent.length > 1, $('#ovName').textContent);
   assert('Preis angezeigt', $('#ovPrize').textContent === 'Testpreis', $('#ovPrize').textContent);
   assert('Claim-Timer läuft', GB.winner.isPending());
