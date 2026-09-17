@@ -1,7 +1,7 @@
 /* ============================================================================
  * GorgiiBot – overlay.js
  * Transparente Overlay-Seite für OBS-Browserquellen: zeigt NUR die Bühne
- * (Glücksrad oder Case Opening) plus kompaktes Gewinner-Banner.
+ * (Glücksrad oder Roulette) plus kompaktes Gewinner-Banner.
  * - Konfiguration komplett per URL-Parameter (siehe OBS-Dialog der Hauptapp).
  * - Baut seinen Pool selbst aus demselben Twitch-Chat (kein geteilter
  *   Speicher nötig) – daher das Overlay vor Giveaway-Start öffnen.
@@ -36,7 +36,7 @@
         .filter(Boolean);
       c = {
         channel: GB.twitch.cleanChannel(q.get('channel') || ''),
-        view: q.get('view') === 'case' ? 'case' : 'wheel',
+        view: q.get('view') === 'roulette' ? 'roulette' : 'wheel',
         mode: q.get('mode') === 'all' ? 'all' : 'keywords',
         keywords: keywords.length ? keywords : ['!giveaway'],
         spinSeconds: intParam(q, 'spin', 8, 3, 20),
@@ -46,7 +46,10 @@
         defaultBots: q.get('bots') !== '0',
         banlist: q.get('ban') || '',
         sound: q.get('sound') === '1',
-        theme: q.get('theme') === 'light' ? 'light' : 'dark'
+        theme: q.get('theme') === 'light' ? 'light' : 'dark',
+        accent: (function (a) {
+          return ['green', 'blue', 'purple', 'orange'].indexOf(a) >= 0 ? a : 'green';
+        })(q.get('accent') || '')
       };
       try { localStorage.setItem('gorgiibot.overlay', JSON.stringify(c)); } catch (e) {}
     } else {
@@ -55,7 +58,7 @@
         c = {
           channel: '', view: 'wheel', mode: 'keywords', keywords: ['!giveaway'],
           spinSeconds: 8, claimSeconds: 60, prize: '', ignoreCommands: true,
-          defaultBots: true, banlist: '', sound: false, theme: 'dark'
+          defaultBots: true, banlist: '', sound: false, theme: 'dark', accent: 'green'
         };
       }
     }
@@ -86,6 +89,7 @@
     // Hinweis: Pool wird NICHT wiederhergestellt – Overlay startet immer frisch.
 
     GB.ui.applyTheme(st.theme);
+    GB.ui.applyAccent(cfg.accent);
     GB.audio.setEnabled(cfg.sound);
     GB.audio.setVolume(0.6);
 
@@ -94,7 +98,7 @@
     GB.pool.init(document.createElement('div'));
     GB.app = { refreshStages: refreshStages };
     GB.wheel.init('wheelCanvas');
-    GB.caseOp.init('caseViewport', 'caseTrack');
+    GB.roulette.init('rlViewport', 'rlTrack');
     applyView(cfg.view);
 
     GB.twitch.on('status', onStatus);
@@ -125,14 +129,14 @@
   }
 
   function applyView(view) {
-    const isWheel = view !== 'case';
+    const isWheel = view !== 'roulette';
     U.$('#wheelWrap').classList.toggle('hidden', !isWheel);
-    U.$('#caseWrap').classList.toggle('hidden', isWheel);
+    U.$('#rlWrap').classList.toggle('hidden', isWheel);
     const label = U.$('#ovSpin span');
-    if (label) label.textContent = isWheel ? 'Rad drehen' : 'Case öffnen';
+    if (label) label.textContent = isWheel ? 'Rad drehen' : 'Roulette starten';
     window.requestAnimationFrame(function () {
       GB.wheel.resize();
-      if (!isWheel) GB.caseOp.backToIdle();
+      if (!isWheel) GB.roulette.backToIdle();
     });
   }
 
@@ -140,10 +144,10 @@
   function refreshStages() {
     const list = GB.pool.ordered();
     GB.wheel.setData(list);
-    GB.caseOp.setData(list);
+    GB.roulette.setData(list);
     const has = list.length >= 2;
     U.$('#wheelEmpty').classList.toggle('hidden', has);
-    U.$('#caseEmpty').classList.toggle('hidden', has);
+    U.$('#rlEmpty').classList.toggle('hidden', has);
     U.$('#ovCount').textContent = String(list.length);
   }
 
@@ -188,7 +192,7 @@
 
     const idx = U.randInt(0, list.length);
     const winner = list[idx];
-    const engine = cfg.view === 'case' ? GB.caseOp : GB.wheel;
+    const engine = cfg.view === 'roulette' ? GB.roulette : GB.wheel;
     engine.spinTo(idx, cfg.spinSeconds * 1000).then(function () {
       spinning = false;
       GB.audio.win();
@@ -245,7 +249,7 @@
     setStatus('Gewinner bestätigt: ' + p.display);
     GB.pool.remove(p.login);
     U.$('#ovSpin').disabled = false;
-    if (cfg.view === 'case') GB.caseOp.backToIdle();
+    if (cfg.view === 'roulette') GB.roulette.backToIdle();
     window.setTimeout(function () {
       if (!GB.winner.isPending()) hideWinner();
     }, 8000);

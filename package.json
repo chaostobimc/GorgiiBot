@@ -4,7 +4,8 @@
   "description": "Interaktives Twitch-Giveaway-System (Glücksrad & Case Opening) – rein clientseitig, ohne Backend.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "node test/smoke.js && node test/e2e.js && node test/e2e-overlay.js"
   },
   "repository": {
     "type": "git",
@@ -14,5 +15,8 @@
   "license": "MIT",
   "engines": {
     "node": ">=16"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.0"
   }
 }

@@ -1,6 +1,6 @@
 # GorgiiBot · Twitch Giveaway System
 
-Interaktives Giveaway-System für Twitch – **Glücksrad** & **CS2 Case-Opening** – als
+Interaktives Giveaway-System für Twitch – **Glücksrad** & **Roulette** – als
 dezente, GitHub-inspirierte Web-App. Läuft **komplett clientseitig**, ohne Backend,
 ohne Build-Schritt, ohne Account.
 
@@ -41,16 +41,23 @@ npm start
 ## OBS-Overlay
 
 Über den Button **OBS-Overlay** (unter der Bühne) erhältst du eine URL für eine
-transparente Browserquelle (`overlay.html`): nur Glücksrad oder Case Opening,
+transparente Browserquelle (`overlay.html`): nur Glücksrad oder Roulette,
 kompaktes Gewinner-Banner und Spin-Button. Die URL enthält Kanal, Modus,
 Keywords und Zeiten als Parameter. Das Overlay liest denselben Twitch-Chat und
 baut seinen eigenen Pool – daher vor Giveaway-Start öffnen. Gedreht wird im
 Overlay (OBS: Rechtsklick → Interagieren, oder Leertaste im Overlay-Tab).
 
+## Tests
+
+```bash
+npm install   # einmalig (nur Test-Abhängigkeit jsdom)
+npm test      # Smoke- + E2E-Laufzeittests (Hauptapp & Overlay)
+```
+
 ## Funktionen
 
 - 🎡 **Glücksrad** (Canvas, Ease-Out-Physik, Idle-Rotation, Tick-Sounds)
-- 📦 **Case Opening** (Roulette-Leiste mit Marker, Seltenheits-Kärtchen, Endlos-Loop im Idle)
+- 🎯 **Roulette** (Kärtchen-Leiste mit Mittelmarker, Tick-Sounds, Endlos-Loop im Idle)
 - ⏱️ **Claim-Timer** mit Chat-Erkennung, Bestätigungs-Status & Auto-Reroll
 - 👥 **Teilnehmer-Pool:** Duplikat-Filter, Suche, Sortierung, manueller Remove,
   manuelles Hinzufügen, CSV/JSON-Export, JSON-Import
@@ -72,7 +79,7 @@ js/store.js         – State + localStorage-Persistenz
 js/twitch.js        – Anonymer IRC-WebSocket-Client (nur Lesen)
 js/participants.js  – Pool, Avatare, Suche/Sortierung, Ex-/Import
 js/wheel.js         – Glücksrad-Engine (Canvas + Idle + Ease-Out-Spin)
-js/case.js          – Case-Opening-Engine (Roulette + Idle-Loop)
+js/roulette.js          – Roulette-Engine (Leiste + Idle-Loop + Spin)
 js/winner.js        – Gewinner-Modal + Claim-Timer + Auto-Reroll
 js/ui.js            – Theme, Toasts, Chat-Feed, Log, Statistiken
 js/app.js           – Orchestrierung & Event-Verdrahtung

@@ -33,6 +33,22 @@
     return document.documentElement.getAttribute('data-theme') === 'light';
   }
 
+  // Akzentfarben aus den CSS-Variablen (bei Theme-/Akzentwechsel syncen)
+  const COLORS = { accent: '#238636', hover: '#2ea043', soft: '#12261a' };
+
+  function syncColors() {
+    try {
+      const cs = getComputedStyle(document.documentElement);
+      const g = function (name, fb) {
+        const v = (cs.getPropertyValue(name) || '').trim();
+        return v || fb;
+      };
+      COLORS.accent = g('--accent', COLORS.accent);
+      COLORS.hover = g('--accent-hover', COLORS.hover);
+      COLORS.soft = g('--accent-soft', COLORS.soft);
+    } catch (e) { /* Fallbacks behalten */ }
+  }
+
   function easeOutQuint(t) {
     return 1 - Math.pow(1 - t, 5);
   }
@@ -55,6 +71,7 @@
     S.canvas = document.getElementById(canvasId);
     if (!S.canvas) return;
     S.ctx = S.canvas.getContext('2d');
+    syncColors();
     resize();
     if (window.ResizeObserver && S.canvas.parentElement) {
       const ro = new ResizeObserver(function () { resize(); });
@@ -167,7 +184,7 @@
       ctx.arc(c, c, R, a0, a1);
       ctx.closePath();
       if (i === S.highlight) {
-        ctx.fillStyle = light ? '#dafbe1' : '#12261a';
+        ctx.fillStyle = COLORS.soft;
       } else if (i % 2 === 0) {
         ctx.fillStyle = light ? '#ffffff' : '#1c2128';
       } else {
@@ -188,9 +205,7 @@
         const isWin = i === S.highlight;
         ctx.font = (isWin ? '600 ' : '400 ') + fontSize +
           'px -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif';
-        ctx.fillStyle = isWin
-          ? (light ? '#1a7f37' : '#3fb950')
-          : (light ? '#1f2328' : '#e6edf3');
+        ctx.fillStyle = isWin ? COLORS.hover : (light ? '#1f2328' : '#e6edf3');
         let label = S.names[i].display;
         const maxChars = R > 200 ? 16 : 12;
         if (label.length > maxChars) label = label.slice(0, maxChars - 1) + '…';
@@ -214,7 +229,7 @@
     // Grüner Punkt als Markenzeichen
     ctx.beginPath();
     ctx.arc(c, c, 9, 0, TAU);
-    ctx.fillStyle = light ? '#1f883d' : '#238636';
+    ctx.fillStyle = COLORS.accent;
     ctx.fill();
   }
 
@@ -260,6 +275,7 @@
     init: init,
     resize: resize,
     setData: setData,
+    refreshTheme: syncColors,
     spinTo: spinTo,
     isSpinning: isSpinning,
     setIdle: setIdle,

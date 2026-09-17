@@ -1,7 +1,7 @@
 /* ============================================================================
  * GorgiiBot – obs.js
  * Der OBS-Knopf: öffnet einen Dialog mit der Overlay-URL (overlay.html),
- * die Glücksrad oder Case Opening als transparente OBS-Browserquelle zeigt.
+ * die Glücksrad oder Roulette als transparente OBS-Browserquelle zeigt.
  * Die URL enthält Kanal, Ansicht, Modus, Keywords und Zeiten als Parameter.
  * Ändert nichts am Verhalten der Hauptapp – reine Ergänzung.
  * ========================================================================== */
@@ -22,7 +22,7 @@
     );
     base.searchParams.set('channel', channel);
     const checked = document.querySelector('input[name="obsView"]:checked');
-    base.searchParams.set('view', checked ? checked.value : (st.view === 'case' ? 'case' : 'wheel'));
+    base.searchParams.set('view', checked ? checked.value : (st.view === 'roulette' ? 'roulette' : 'wheel'));
     base.searchParams.set('mode', s.mode);
     base.searchParams.set('keywords', (s.keywords || []).join(','));
     base.searchParams.set('spin', String(s.spinSeconds));
@@ -32,6 +32,7 @@
     base.searchParams.set('bots', s.defaultBots ? '1' : '0');
     if ((s.banlist || '').trim()) base.searchParams.set('ban', s.banlist.trim());
     base.searchParams.set('theme', st.theme);
+    base.searchParams.set('accent', s.accent || 'green');
     return base.toString();
   }
 
@@ -42,7 +43,7 @@
 
   function open() {
     // Aktuelle Ansicht vorauswählen
-    const v = GB.store.state.view === 'case' ? 'case' : 'wheel';
+    const v = GB.store.state.view === 'roulette' ? 'roulette' : 'wheel';
     const r = document.querySelector('input[name="obsView"][value="' + v + '"]');
     if (r) r.checked = true;
     refresh();

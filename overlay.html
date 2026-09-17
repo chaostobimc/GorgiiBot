@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="GorgiiBot Overlay – Glücksrad / Case Opening als transparente OBS-Browserquelle.">
+  <meta name="description" content="GorgiiBot Overlay – Glücksrad / Roulette als transparente OBS-Browserquelle.">
   <title>GorgiiBot Overlay</title>
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='14' fill='%23238636'/%3E%3Ccircle cx='16' cy='16' r='5' fill='%230d1117'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/styles.css">
@@ -20,7 +20,7 @@
       gap: 10px;
       align-items: center;
     }
-    #wheelWrap, #caseWrap { width: 100%; }
+    #wheelWrap, #rlWrap { width: 100%; }
     #wheelWrap { display: flex; justify-content: center; position: relative; }
     /* Kompaktes Gewinner-Banner */
     .ov-winner {
@@ -78,12 +78,12 @@
       <div id="wheelEmpty" class="stage-empty">Warte auf Teilnehmer …</div>
     </div>
 
-    <div id="caseWrap" class="hidden">
-      <div class="case-viewport" id="caseViewport">
-        <div class="case-track" id="caseTrack"></div>
-        <div class="case-marker" aria-hidden="true"></div>
+    <div id="rlWrap" class="hidden">
+      <div class="rl-viewport" id="rlViewport">
+        <div class="rl-track" id="rlTrack"></div>
+        <div class="rl-marker" aria-hidden="true"></div>
       </div>
-      <div id="caseEmpty" class="stage-empty" style="position:static">Warte auf Teilnehmer …</div>
+      <div id="rlEmpty" class="stage-empty" style="position:static">Warte auf Teilnehmer …</div>
     </div>
 
     <div id="ovWinner" class="ov-winner hidden">
@@ -115,7 +115,7 @@
   <script src="js/twitch.js" defer></script>
   <script src="js/participants.js" defer></script>
   <script src="js/wheel.js" defer></script>
-  <script src="js/case.js" defer></script>
+  <script src="js/roulette.js" defer></script>
   <script src="js/winner.js" defer></script>
   <script src="js/ui.js" defer></script>
   <script src="js/overlay.js" defer></script>

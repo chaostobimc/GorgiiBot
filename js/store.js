@@ -12,7 +12,7 @@
   const DEFAULTS = {
     theme: 'dark',          // 'dark' | 'light'
     channel: '',
-    view: 'wheel',          // 'wheel' | 'case'
+    view: 'wheel',          // 'wheel' | 'roulette'
     collectionOpen: true,
     settings: {
       mode: 'keywords',     // 'keywords' | 'all'
@@ -23,6 +23,7 @@
       claimSeconds: 60,     // 10–300
       sound: true,
       volume: 0.6,
+      accent: 'green',      // 'green' | 'blue' | 'purple' | 'orange'
       banlist: '',
       defaultBots: true,
       autoRemoveConfirmed: true,
@@ -70,6 +71,7 @@
     // Hygiene: ungültige Werte abfangen
     const st = GB.store.state;
     if (!Array.isArray(st.settings.keywords)) st.settings.keywords = ['!giveaway'];
+    if (['green', 'blue', 'purple', 'orange'].indexOf(st.settings.accent) === -1) st.settings.accent = 'green';
     if (!Array.isArray(st.participants)) st.participants = [];
     // Nur plausible Teilnehmer übernehmen (max. 5000)
     st.participants = st.participants

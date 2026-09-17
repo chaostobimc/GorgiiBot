@@ -25,6 +25,7 @@
       const meta = document.querySelector('meta[name="theme-color"]');
       if (meta) meta.setAttribute('content', theme === 'dark' ? '#0d1117' : '#ffffff');
     } catch (e) {}
+    if (GB.wheel && GB.wheel.refreshTheme) GB.wheel.refreshTheme();
   }
 
   function toggleTheme() {
@@ -32,6 +33,17 @@
     st.theme = st.theme === 'dark' ? 'light' : 'dark';
     GB.store.saveNow();
     applyTheme(st.theme);
+  }
+
+  /** Akzentfarbe setzen (data-accent + Swatch-Markierung + Rad-Farben) */
+  function applyAccent(accent) {
+    const valid = ['green', 'blue', 'purple', 'orange'];
+    const a = valid.indexOf(accent) >= 0 ? accent : 'green';
+    document.documentElement.setAttribute('data-accent', a);
+    U.$$('.swatch').forEach(function (b) {
+      b.classList.toggle('active', b.getAttribute('data-accent') === a);
+    });
+    if (GB.wheel && GB.wheel.refreshTheme) GB.wheel.refreshTheme();
   }
 
   // ---- Toasts ----
@@ -194,7 +206,7 @@
 
   function spinLabel() {
     const view = GB.store.state.view;
-    return view === 'case' ? 'Case öffnen' : 'Rad drehen';
+    return view === 'roulette' ? 'Roulette starten' : 'Rad drehen';
   }
 
   // ---- Sound-Button ----
@@ -213,6 +225,7 @@
   GB.ui = {
     applyTheme: applyTheme,
     toggleTheme: toggleTheme,
+    applyAccent: applyAccent,
     toast: toast,
     log: log,
     chatMessage: chatMessage,
