@@ -90,8 +90,8 @@ public class WinnerScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
-        context.fill(0, 0, this.width, this.height, 0xAA000000);
+        // Kein renderBackground(): Blur ist nur einmal pro Frame erlaubt.
+        context.fill(0, 0, this.width, this.height, 0xCC000000);
 
         TextRenderer tr = this.textRenderer;
         int pw = Math.min(420, this.width - 40);

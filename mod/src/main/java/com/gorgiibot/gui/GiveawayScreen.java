@@ -206,7 +206,9 @@ public class GiveawayScreen extends Screen {
             return;
         }
         refreshButtons();
-        this.renderBackground(context, mouseX, mouseY, delta);
+        // Hinweis: kein renderBackground() — das wendet Blur an, der nur einmal
+        // pro Frame erlaubt ist (Vanilla/andere Mods nutzen ihn bereits).
+        context.fill(0, 0, this.width, this.height, 0xB0101015);
 
         TextRenderer tr = this.textRenderer;
         int panelX = this.width - PANEL_WIDTH - 12;

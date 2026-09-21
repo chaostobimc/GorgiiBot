@@ -124,7 +124,8 @@ public class SettingsScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        // Kein renderBackground(): Blur ist nur einmal pro Frame erlaubt.
+        context.fill(0, 0, this.width, this.height, 0xB0101015);
         TextRenderer tr = this.textRenderer;
         int w = 220;
         int x = (this.width - w) / 2;

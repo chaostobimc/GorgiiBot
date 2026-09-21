@@ -42,8 +42,10 @@ public class GorgiiBotClient implements ClientModInitializer {
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
                 ClientCommandManager.literal("giveaway").executes(context -> {
+                    // Der Befehl kann außerhalb des Render-Threads laufen:
+                    // Screen-Wechsel daher immer in den Client-Thread verlagern.
                     MinecraftClient client = context.getSource().getClient();
-                    client.setScreen(new GiveawayScreen());
+                    client.execute(() -> client.setScreen(new GiveawayScreen()));
                     return 1;
                 })));
     }
