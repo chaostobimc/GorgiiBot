@@ -1,0 +1,26 @@
+{
+	"schemaVersion": 1,
+	"id": "gorgiibot",
+	"version": "${version}",
+	"name": "GorgiiBot Giveaway",
+	"description": "Twitch-Giveaway-System direkt in Minecraft: Glücksrad & Roulette mit Twitch-Chat-Anbindung und Profilbildern. Clientseitig, ohne Server-Mod.",
+	"authors": [
+		"Gorgii"
+	],
+	"contact": {
+		"homepage": "https://www.twitch.tv/",
+		"sources": "https://github.com/chaostobimc/GorgiiBot"
+	},
+	"environment": "client",
+	"entrypoints": {
+		"client": [
+			"com.gorgiibot.GorgiiBotClient"
+		]
+	},
+	"depends": {
+		"fabricloader": ">=0.19.5",
+		"minecraft": "~1.21.11",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}
