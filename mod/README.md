@@ -33,7 +33,7 @@ Zum Testen direkt aus dem Quellcode: `./gradlew runClient`.
 
 ## Benutzung
 
-- **G-Taste** oder Befehl **`/gorgii`** öffnet das Giveaway-Menü
+- **G-Taste** oder Befehl **`/giveaway`** öffnet das Giveaway-Menü
   (funktioniert im Singleplayer und auf Servern, pausiert das Spiel nicht).
 - In den **Einstellungen**: Twitch-Kanal und Schlüsselwort (Standard:
   `!teilnahme`) eintragen.

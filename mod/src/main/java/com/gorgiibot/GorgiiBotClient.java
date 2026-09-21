@@ -16,7 +16,7 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Client-Einstiegspunkt des GorgiiBot-Giveaway-Mods.
  *
- * <p>Registriert Taste (G), Client-Command (/gorgii) und Tick-Handler.
+ * <p>Registriert Taste (G), Client-Command (/giveaway) und Tick-Handler.
  * Der Mod ist rein clientseitig und braucht keinen Server-Mod.
  */
 public class GorgiiBotClient implements ClientModInitializer {
@@ -40,7 +40,7 @@ public class GorgiiBotClient implements ClientModInitializer {
         });
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
-                ClientCommandManager.literal("gorgii").executes(context -> {
+                ClientCommandManager.literal("giveaway").executes(context -> {
                     MinecraftClient client = context.getSource().getClient();
                     client.setScreen(new GiveawayScreen());
                     return 1;

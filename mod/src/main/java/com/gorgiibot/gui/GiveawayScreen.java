@@ -261,7 +261,7 @@ public class GiveawayScreen extends Screen {
 
         int hintY = this.height - 36;
         context.drawText(tr, "G: Menü öffnen", tx, hintY, 0xFF5B6470, false);
-        context.drawText(tr, "/gorgii im Chat", tx, hintY + 11, 0xFF5B6470, false);
+        context.drawText(tr, "/giveaway im Chat", tx, hintY + 11, 0xFF5B6470, false);
     }
 
     private void drawWheelTab(DrawContext context, TextRenderer tr, int x, int y, int w, int h) {
