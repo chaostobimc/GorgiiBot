@@ -10,7 +10,7 @@ import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -29,8 +29,9 @@ public class GorgiiBotClient implements ClientModInitializer {
     public void onInitializeClient() {
         state = new GiveawayState();
 
+        KeyBinding.Category category = KeyBinding.Category.create(Identifier.of(MOD_ID, "main"));
         openKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
-                "key.gorgiibot.open", InputUtil.Type.KEYSYM, GLFW.GLFW_KEY_G, "key.categories.gorgiibot"));
+                "key.gorgiibot.open", GLFW.GLFW_KEY_G, category));
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             state.tick();
