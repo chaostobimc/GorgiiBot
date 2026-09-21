@@ -6,7 +6,7 @@ import net.minecraft.client.sound.PositionedSoundInstance;
 import net.minecraft.sound.SoundEvent;
 import net.minecraft.util.Identifier;
 
-/** Vanilla-Sounds für Ticks und Fanfare (keine eigenen Assets nötig). */
+/** Vanilla-Sounds für Ticks, Countdown und Fanfare (keine eigenen Assets nötig). */
 public final class GorgiiSounds {
     private GorgiiSounds() {
     }
@@ -14,6 +14,8 @@ public final class GorgiiSounds {
     private static final SoundEvent TICK = SoundEvent.of(Identifier.ofVanilla("block.note_block.hat"));
     private static final SoundEvent PLING = SoundEvent.of(Identifier.ofVanilla("block.note_block.pling"));
     private static final SoundEvent LEVELUP = SoundEvent.of(Identifier.ofVanilla("entity.player.levelup"));
+    private static final SoundEvent BELL = SoundEvent.of(Identifier.ofVanilla("block.note_block.bell"));
+    private static final SoundEvent DRUM = SoundEvent.of(Identifier.ofVanilla("block.note_block.basedrum"));
 
     /** Tonhöhen für die Gewinner-Fanfare (aufsteigend). */
     public static final float[] FANFARE = {0.5f, 0.63f, 0.75f, 1.0f, 1.26f, 1.5f};
@@ -42,5 +44,20 @@ public final class GorgiiSounds {
     /** Level-up-Jingle für den Gewinner-Moment. */
     public static void levelup() {
         play(LEVELUP, 1.0f);
+    }
+
+    /** Countdown-Pieps in den letzten 5 Sekunden der Bestätigungszeit. */
+    public static void countdown(boolean urgent) {
+        play(PLING, urgent ? 0.5f : 0.75f);
+    }
+
+    /** Der Gewinner hat sich im Chat gemeldet. */
+    public static void confirm() {
+        play(BELL, 1.0f);
+    }
+
+    /** Zeit abgelaufen – gleich folgt der automatische Reroll. */
+    public static void timeout() {
+        play(DRUM, 0.7f);
     }
 }

@@ -25,6 +25,14 @@ public class GorgiiConfig {
     public boolean sound = true;
     /** Konfetti an/aus. */
     public boolean confetti = true;
+    /** Twitch-Profilbilder laden (wie die Web-App via decapi.me). */
+    public boolean avatars = true;
+    /** Sekunden, die der Gewinner Zeit hat, sich im Chat zu melden. */
+    public int claimSeconds = 60;
+    /** Bestätigten Gewinner automatisch aus dem Pool entfernen. */
+    public boolean autoRemoveConfirmed = true;
+    /** Gewinner ohne Reaktion nach Ablauf automatisch entfernen. */
+    public boolean autoRemoveTimeout = true;
 
     public static Path file() {
         return FabricLoader.getInstance().getConfigDir().resolve("gorgiibot.json");
@@ -66,6 +74,12 @@ public class GorgiiConfig {
         }
         if (subLuck > 5) {
             subLuck = 5;
+        }
+        if (claimSeconds < 10) {
+            claimSeconds = 10;
+        }
+        if (claimSeconds > 300) {
+            claimSeconds = 300;
         }
     }
 

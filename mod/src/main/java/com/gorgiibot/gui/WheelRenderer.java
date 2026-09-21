@@ -4,7 +4,6 @@ import com.gorgiibot.GorgiiBotClient;
 import com.gorgiibot.Participant;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
@@ -35,8 +34,8 @@ public class WheelRenderer {
     private final Identifier textureId = Identifier.of(GorgiiBotClient.MOD_ID, "wheel");
     private NativeImageBackedTexture texture;
     private NativeImage image;
-    private int builtVersion = -1;
-    private int builtCount = 0;
+    private int builtVersion = Integer.MIN_VALUE;
+    private int builtCount = -1;
 
     /** Stellt sicher, dass die Rad-Textur zum Teilnehmerstand passt. */
     public void ensure(List<Participant> parts, int version) {
@@ -61,9 +60,9 @@ public class WheelRenderer {
         double seg = Math.PI * 2.0 / count;
         boolean empty = parts.isEmpty();
         for (int y = 0; y < TEX_SIZE; y++) {
+            double dy = y + 0.5 - center;
             for (int x = 0; x < TEX_SIZE; x++) {
                 double dx = x + 0.5 - center;
-                double dy = y + 0.5 - center;
                 double dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist > radius) {
                     image.setColorArgb(x, y, 0x00000000);
@@ -136,14 +135,17 @@ public class WheelRenderer {
     /** Zeichnet das Rad rotiert plus radial mitlaufende Namen. */
     public void draw(DrawContext context, TextRenderer textRenderer, List<Participant> parts,
                      int centerX, int centerY, int size, float rotation) {
+        if (texture == null) {
+            return;
+        }
         int half = size / 2;
         Matrix3x2fStack matrices = context.getMatrices();
         matrices.pushMatrix();
         matrices.translate(centerX, centerY);
         matrices.rotate(rotation);
         matrices.translate(-half, -half);
-        context.drawTexture(RenderPipelines.GUI_TEXTURED, textureId, 0, 0, 0f, 0f, size, size,
-                TEX_SIZE, TEX_SIZE);
+        // Vollständige Textur (Quellgröße 512×512) auf size×size skalieren.
+        GuiUtil.drawTexture(context, textureId, 0, 0, size, size, TEX_SIZE, TEX_SIZE);
         matrices.popMatrix();
 
         int count = parts.size();
@@ -175,6 +177,7 @@ public class WheelRenderer {
         }
         texture = null;
         image = null;
-        builtVersion = -1;
+        builtVersion = Integer.MIN_VALUE;
+        builtCount = -1;
     }
 }

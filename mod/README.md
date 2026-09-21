@@ -42,6 +42,18 @@ Zum Testen direkt aus dem Quellcode: `./gradlew runClient`.
 - Zuschauer nehmen per Schlüsselwort im Chat teil. Bei **Start** wird fair
   per Zufall gezogen (Subs/VIPs/Mods können mit „Sub-Glück“ mehr Lose
   bekommen).
+- **Bestätigung wie auf der Website:** Nach der Ziehung läuft ein Countdown
+  (Standard **60 s**). Schreibt der Gewinner in dieser Zeit **irgendetwas** im
+  Twitch-Chat, gilt der Gewinn als bestätigt (grün + Konfetti). Meldet er sich
+  nicht, erfolgt nach kurzer Pause automatisch ein **Reroll**. Der Countdown
+  läuft auch weiter, wenn man den Gewinner-Dialog schließt.
+- **AFK-Animation:** Glücksrad und Roulette bewegen sich im Ruhezustand ganz
+  langsam weiter (0,22 rad/s bzw. 45 px/s) – genau wie in der Web-App. In der
+  Roulette sind die Teilnehmer damit **dauerhaft sichtbar**, nicht erst beim
+  Drehen.
+- Neu in den Einstellungen: **Bestätigung** (30/45/60/90/120/180 s),
+  **Avatare** an/aus, Gewinner **nach Claim** bzw. **nach Timeout**
+  automatisch entfernen.
 - Zum Ausprobieren ohne Chat gibt es in den Einstellungen
   **Test-Teilnehmer**.
 

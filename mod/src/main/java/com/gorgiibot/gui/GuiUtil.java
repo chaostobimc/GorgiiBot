@@ -1,7 +1,9 @@
 package com.gorgiibot.gui;
 
 import net.minecraft.client.font.TextRenderer;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.util.Identifier;
 
 /** Kleine Zeichenhelfer für die Giveaway-Screens. */
 public final class GuiUtil {
@@ -30,6 +32,24 @@ public final class GuiUtil {
     public static void drawCenteredText(DrawContext context, TextRenderer textRenderer, String text,
                                        int centerX, int y, int color, boolean shadow) {
         context.drawText(textRenderer, text, centerX - textRenderer.getWidth(text) / 2, y, color, shadow);
+    }
+
+    /**
+     * Zeichnet eine Textur <b>vollständig</b> in das Zielrechteck.
+     *
+     * <p>Wichtig: Die kurze {@code drawTexture}-Variante benutzt Breite/Höhe
+     * gleichzeitig als Größe des Quellausschnitts <i>und</i> des Zielrechtecks
+     * („The width and height of the region are the same as the dimensions of the
+     * rectangle“). Ist die Textur größer als das Ziel, sähe man dadurch nur
+     * einen Ausschnitt (beim Rad exakt ein Viertel, bei Avataren ein
+     * verschobener Bildausschnitt). Diese Variante übergibt Ziel- und
+     * Quellgröße getrennt, deshalb landet die Grafik immer komplett,
+     * skaliert und zentriert im Zielrechteck.
+     */
+    public static void drawTexture(DrawContext context, Identifier texture, int x, int y,
+                                   int width, int height, int textureWidth, int textureHeight) {
+        context.drawTexture(RenderPipelines.GUI_TEXTURED, texture, x, y, 0f, 0f,
+                width, height, textureWidth, textureHeight, textureWidth, textureHeight);
     }
 
     /** Dunkelt eine ARGB-Farbe um den Faktor ab (Alpha bleibt). */
