@@ -892,7 +892,7 @@ public class GiveawayScreen extends Screen {
 
         Participant last = state.getLastWinner();
         if (last != null && ty < contentY + stageH - 104) {
-            context.drawText(tr, "Letzter Gewinner", tx, ty, GuiUtil.TEXT_DIM, true);
+            context.drawText(tr, "Zuletzt gewonnen", tx, ty, GuiUtil.TEXT_DIM, true);
             ty += 11;
             context.drawText(tr, GuiUtil.trimToWidth(tr, last.name, maxW), tx, ty, GuiUtil.TEXT, true);
         }

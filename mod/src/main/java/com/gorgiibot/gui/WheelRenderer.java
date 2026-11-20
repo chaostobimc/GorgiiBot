@@ -16,6 +16,14 @@ import java.util.List;
  * Glücksrad: Die Segmente werden einmalig in eine Textur gerastert (nur neu,
  * wenn sich die Teilnehmer ändern), pro Frame rotiert gezeichnet, die Namen
  * laufen radial mit.
+ *
+ * <p><b>Warum zwei Texturen?</b> Ring und Nabe stecken in einer zweiten,
+ * <i>nicht</i> rotierenden Textur. Vorher drehte sich das komplette Rad
+ * inklusive Außenkante mit: die Kante wurde beim Verkleinern der 1024er-Textur
+ * angetastet und flackerte dadurch im Kreis – das sah aus, als würde das Rad
+ * „eiern“. Jetzt liegt der Rahmen still über den Segmenten und deckt deren
+ * Kante ab; die Rotation läuft zusätzlich in Gleitkomma um den exakten
+ * Mittelpunkt (vorher wurde halbe Pixel abgeschnitten).
  */
 public class WheelRenderer {
     /** Hochauflösend (1024×1024), damit das Rad auch groß scharf bleibt. */
@@ -32,31 +40,51 @@ public class WheelRenderer {
             0xFF85C1E9, 0xFFF7DC6F
     };
 
-    private final Identifier textureId = Identifier.of(GorgiiBotClient.MOD_ID, "wheel");
-    private NativeImageBackedTexture texture;
-    private NativeImage image;
+    /** Radius der Segmente relativ zum Radradius (Rahmen deckt den Rand ab). */
+    private static final double SEGMENT_RADIUS = 0.955;
+    /** Außenring (dunkel) und weißer Ring, jeweils relativ zum Radradius. */
+    private static final double RING_OUTER = 1.0;
+    private static final double RING_INNER = 0.90;
+    /** Nabe in der Mitte. */
+    private static final double HUB_OUTER = 0.17;
+    private static final double HUB_INNER = 0.145;
+
+    private final Identifier segmentId = Identifier.of(GorgiiBotClient.MOD_ID, "wheel");
+    private final Identifier frameId = Identifier.of(GorgiiBotClient.MOD_ID, "wheel_frame");
+    private NativeImageBackedTexture segmentTexture;
+    private NativeImage segmentImage;
+    private NativeImageBackedTexture frameTexture;
+    private NativeImage frameImage;
     private int builtVersion = Integer.MIN_VALUE;
     private int builtCount = -1;
 
     /** Stellt sicher, dass die Rad-Textur zum Teilnehmerstand passt. */
     public void ensure(List<Participant> parts, int version) {
-        if (texture != null && version == builtVersion && parts.size() == builtCount) {
+        if (segmentTexture == null) {
+            segmentImage = new NativeImage(NativeImage.Format.RGBA, TEX_SIZE, TEX_SIZE, false);
+            segmentTexture = new NativeImageBackedTexture(() -> "gorgiibot-wheel", segmentImage);
+            MinecraftClient.getInstance().getTextureManager().registerTexture(segmentId, segmentTexture);
+        }
+        if (frameTexture == null) {
+            frameImage = new NativeImage(NativeImage.Format.RGBA, TEX_SIZE, TEX_SIZE, false);
+            frameTexture = new NativeImageBackedTexture(() -> "gorgiibot-wheel-frame", frameImage);
+            MinecraftClient.getInstance().getTextureManager().registerTexture(frameId, frameTexture);
+            rasterizeFrame();
+            frameTexture.upload();
+        }
+        if (version == builtVersion && parts.size() == builtCount && builtVersion != Integer.MIN_VALUE) {
             return;
         }
-        if (image == null) {
-            image = new NativeImage(NativeImage.Format.RGBA, TEX_SIZE, TEX_SIZE, false);
-            texture = new NativeImageBackedTexture(() -> "gorgiibot-wheel", image);
-            MinecraftClient.getInstance().getTextureManager().registerTexture(textureId, texture);
-        }
-        rasterize(parts);
-        texture.upload();
+        rasterizeSegments(parts);
+        segmentTexture.upload();
         builtVersion = version;
         builtCount = parts.size();
     }
 
-    private void rasterize(List<Participant> parts) {
+    /** Nur die farbigen Segmente – der Rahmen liegt als zweite Textur darüber. */
+    private void rasterizeSegments(List<Participant> parts) {
         int center = TEX_SIZE / 2;
-        double radius = center - 4;
+        double radius = (center - 2) * SEGMENT_RADIUS;
         int count = Math.max(1, parts.size());
         double seg = Math.PI * 2.0 / count;
         boolean empty = parts.isEmpty();
@@ -66,7 +94,7 @@ public class WheelRenderer {
                 double dx = x + 0.5 - center;
                 double dist = Math.sqrt(dx * dx + dy * dy);
                 if (dist > radius) {
-                    image.setColorArgb(x, y, 0x00000000);
+                    segmentImage.setColorArgb(x, y, 0x00000000);
                     continue;
                 }
                 double angle = Math.atan2(dy, dx);
@@ -78,26 +106,38 @@ public class WheelRenderer {
                     index = count - 1;
                 }
                 int color = empty ? 0xFF3A3F4A : PALETTE[index % PALETTE.length];
-                // Segment-Trennlinie
+                // Trennlinien zwischen den Segmenten
                 double inSeg = angle - index * seg;
-                if (!empty && count > 1 && inSeg < 0.012) {
-                    color = GuiUtil.darken(color, 0.45f);
+                double lineWidth = Math.max(0.004, 1.2 / radius);
+                if (!empty && count > 1 && inSeg < lineWidth) {
+                    color = GuiUtil.darken(color, 0.7f);
                 }
-                // Außenring (skaliert mit der Texturgröße)
-                int ringOuter = Math.max(4, TEX_SIZE / 51);
-                int ringInner = Math.max(6, TEX_SIZE / 36);
-                int hubOuter = Math.max(12, TEX_SIZE / 15);
-                int hubInner = Math.max(10, TEX_SIZE / 17);
-                if (dist > radius - ringOuter) {
-                    color = GuiUtil.darken(color, 0.55f);
-                } else if (dist > radius - ringInner) {
-                    color = 0xFFF5F5F5;
+                segmentImage.setColorArgb(x, y, color);
+            }
+        }
+    }
+
+    /** Rahmen + Nabe: statisch, wird nie mitgedreht. */
+    private void rasterizeFrame() {
+        int center = TEX_SIZE / 2;
+        double base = center - 2;
+        double ringOuter = base * RING_OUTER;
+        double ringInner = base * RING_INNER;
+        double hubOuter = base * HUB_OUTER;
+        double hubInner = base * HUB_INNER;
+        for (int y = 0; y < TEX_SIZE; y++) {
+            double dy = y + 0.5 - center;
+            for (int x = 0; x < TEX_SIZE; x++) {
+                double dx = x + 0.5 - center;
+                double dist = Math.sqrt(dx * dx + dy * dy);
+                int color = 0x00000000;
+                if (dist >= ringInner && dist <= ringOuter) {
+                    // Außenring dunkel, innen ein heller Abschluss
+                    color = dist > ringInner + (ringOuter - ringInner) * 0.45 ? 0xFF2A2A2A : 0xFFE8E8E8;
+                } else if (dist <= hubOuter) {
+                    color = dist >= hubInner ? 0xFFE8E8E8 : 0xFF2A2A2A;
                 }
-                // Nabe (Mitte)
-                if (dist < hubOuter) {
-                    color = dist < hubInner ? 0xFF23262E : 0xFFF5F5F5;
-                }
-                image.setColorArgb(x, y, color);
+                frameImage.setColorArgb(x, y, color);
             }
         }
     }
@@ -140,18 +180,20 @@ public class WheelRenderer {
     /** Zeichnet das Rad rotiert plus radial mitlaufende Namen. */
     public void draw(DrawContext context, TextRenderer textRenderer, List<Participant> parts,
                      int centerX, int centerY, int size, float rotation) {
-        if (texture == null) {
+        if (segmentTexture == null || frameTexture == null) {
             return;
         }
-        int half = size / 2;
         Matrix3x2fStack matrices = context.getMatrices();
         matrices.pushMatrix();
+        // Gleitkomma-Translate: exakter Mittelpunkt, kein halbes Pixel Versatz.
         matrices.translate(centerX, centerY);
         matrices.rotate(rotation);
-        matrices.translate(-half, -half);
-        // Vollständige Textur (Quellgröße 1024×1024) auf size×size skalieren.
-        GuiUtil.drawTexture(context, textureId, 0, 0, size, size, TEX_SIZE, TEX_SIZE);
+        matrices.translate(-size / 2f, -size / 2f);
+        GuiUtil.drawTexture(context, segmentId, 0, 0, size, size, TEX_SIZE, TEX_SIZE);
         matrices.popMatrix();
+        // Rahmen + Nabe stehen still (kein Flackern der Außenkante).
+        GuiUtil.drawTexture(context, frameId, centerX - size / 2, centerY - size / 2, size, size,
+                TEX_SIZE, TEX_SIZE);
 
         int count = parts.size();
         if (count == 0 || count > MAX_NAMES) {
@@ -162,8 +204,9 @@ public class WheelRenderer {
         int maxTextWidth = (int) (size * 0.5 * 0.52);
         for (int i = 0; i < count; i++) {
             double mid = rotation + i * seg + seg / 2.0;
-            int px = centerX + (int) (Math.cos(mid) * textRadius);
-            int py = centerY + (int) (Math.sin(mid) * textRadius);
+            // Gleitkomma-Position: Namen springen nicht von Pixel zu Pixel.
+            float px = (float) (centerX + Math.cos(mid) * textRadius);
+            float py = (float) (centerY + Math.sin(mid) * textRadius);
             String name = GuiUtil.trimToWidth(textRenderer, parts.get(i).name, maxTextWidth);
             int nameWidth = textRenderer.getWidth(name);
             matrices.pushMatrix();
@@ -177,11 +220,17 @@ public class WheelRenderer {
     /** Gibt die GPU-Textur frei (beim Schließen des Screens). */
     public void close() {
         try {
-            MinecraftClient.getInstance().getTextureManager().destroyTexture(textureId);
+            MinecraftClient.getInstance().getTextureManager().destroyTexture(segmentId);
         } catch (Exception ignored) {
         }
-        texture = null;
-        image = null;
+        try {
+            MinecraftClient.getInstance().getTextureManager().destroyTexture(frameId);
+        } catch (Exception ignored) {
+        }
+        segmentTexture = null;
+        segmentImage = null;
+        frameTexture = null;
+        frameImage = null;
         builtVersion = Integer.MIN_VALUE;
         builtCount = -1;
     }

@@ -191,12 +191,10 @@ public class GiveawayState {
         for (Participant p : pool) {
             roll -= weight(p);
             if (roll < 0) {
-                lastWinner = p;
                 return p;
             }
         }
-        lastWinner = pool.get(0);
-        return lastWinner;
+        return pool.get(0);
     }
 
     private int weight(Participant p) {
@@ -211,6 +209,9 @@ public class GiveawayState {
 
     /** Startet die Bestätigungsphase (Countdown läuft, bis der Gewinner schreibt). */
     public synchronized void startClaim(Participant winner, boolean reroll) {
+        // Erst jetzt als „zuletzt gewonnen“ führen – vorher darf die Anzeige
+        // den Ausgang der laufenden Ziehung nicht verraten.
+        lastWinner = winner;
         claimWinner = winner;
         claimReroll = reroll;
         claimed = false;
