@@ -6,14 +6,14 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.Identifier;
 
 /**
- * Zeichenhelfer für die Giveaway-Screens: Desktop-Theme (abgerundete Ecken,
+ * Zeichenhelfer für die Giveaway-Screens: Theme (abgerundete Ecken,
  * Schatten, Verläufe) plus die ursprünglichen Textur-Helfer.
  */
 public final class GuiUtil {
     private GuiUtil() {
     }
 
-    // ---- Desktop-Theme (GitHub-Dark) ----
+    // ---- Theme (GitHub-Dark) ----
     public static final int BG = 0xFF0D1117;
     public static final int PANEL = 0xFF161B22;
     public static final int PANEL_LIGHT = 0xFF1C2128;
@@ -168,7 +168,7 @@ public final class GuiUtil {
         }
     }
 
-    /** Füllt einen Kreis (Näherung aus Zeilen, für Status-Punkte & Fensterknöpfe). */
+    /** Füllt einen Kreis (Näherung aus Zeilen, für Status-Punkte). */
     public static void fillCircle(DrawContext context, int cx, int cy, int radius, int color) {
         for (int dy = -radius; dy <= radius; dy++) {
             double half = Math.sqrt(Math.max(0, radius * radius - dy * dy));

@@ -42,11 +42,12 @@ Zum Testen direkt aus dem Quellcode: `./gradlew runClient`.
   (funktioniert im Singleplayer und auf Servern, pausiert das Spiel nicht).
   Unterbefehlele: `/giveaway rad`, `/giveaway roulette`,
   `/giveaway teilnehmer`, `/giveaway gesperrt`, `/giveaway einstellungen`.
-- Das Fenster ist ein **Desktop-Programm-Fenster** mit Titelleiste,
-  Sidebar-Navigation (Icons) und Karten – kein Minecraft-Menü mehr.
-  **Tipp für den hochauflösenden Look:** In den Minecraft-Optionen die
-  **GUI-Skala auf „Automatisch“ oder 3–4** stellen. Dann wirkt das Fenster
-  wie ein echtes Programm (groß, scharf, mit Schatten und abgerundeten Ecken).
+- Das Fenster ist ein **großes, hochauflösendes Fenster** mit
+  Sidebar-Navigation (Icons) und Karten – groß und scharf statt kleiner
+  Minecraft-Menü-Optik.
+  **Tipp für die hohe Auflösung:** In den Minecraft-Optionen die
+  **GUI-Skala auf „Automatisch“ oder 3–4** stellen. Dann ist alles groß,
+  scharf und mit Schatten und abgerundeten Ecken dargestellt.
 - In den **Einstellungen**: Twitch-Kanal und Schlüsselwort (Standard:
   `!teilnahme`) eintragen.
 - Auf **Verbinden** klicken – der Mod hört ab sofort anonym den Twitch-Chat

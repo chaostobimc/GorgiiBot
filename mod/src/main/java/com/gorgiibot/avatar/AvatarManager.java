@@ -275,7 +275,7 @@ public class AvatarManager {
         return response.body();
     }
 
-    private String getBytes(String url) throws Exception {
+    private byte[] getBytes(String url) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
                 .header("User-Agent", "GorgiiBot/1.1 (Minecraft mod)")

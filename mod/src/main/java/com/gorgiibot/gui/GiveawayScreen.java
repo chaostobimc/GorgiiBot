@@ -17,11 +17,11 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Haupt-Screen als <b>Desktop-Programm-Fenster</b>: Titelleiste mit
- * Fensterknöpfen, Sidebar-Navigation mit Icons (Rad, Roulette, Teilnehmer,
- * Gesperrte, Einstellungen), Status-Pills und Karten mit Schatten – statt
- * Minecraft-Menü-Optik. Für das hochauflösende Gefühl die GUI-Skala in den
- * Minecraft-Optionen auf „Automatisch“ oder 3–4 stellen (siehe README).
+ * Haupt-Screen als <b>hochauflösendes Fenster</b>: Sidebar-Navigation mit
+ * Icons (Rad, Roulette, Teilnehmer, Gesperrte, Einstellungen), Status-Pills
+ * und Karten mit Schatten – groß und scharf statt kleiner Minecraft-Menü-Optik.
+ * Für die hohe Auflösung die GUI-Skala in den Minecraft-Optionen auf
+ * „Automatisch“ oder 3–4 stellen (siehe README).
  *
  * <p>Die Teilnehmer- und Banlisten sind paginiert (Suche + Sortierung),
  * Aktionen (Entfernen / Bannen / Entbannen) laufen über Icon-Buttons.
@@ -194,12 +194,12 @@ public class GiveawayScreen extends Screen {
         confettiButton = null;
         doneButton = null;
 
-        // Fenster schließen (Titelleiste, rechts)
-        closeButton = ButtonWidget.builder(Text.literal(""), b -> {
+        // Schließen (oben rechts, normaler Text-Button)
+        closeButton = ButtonWidget.builder(Text.literal("Schließen"), b -> {
             if (client != null) {
                 client.setScreen(null);
             }
-        }).dimensions(winX + winW - 34, winY + 7, 24, 18).build();
+        }).dimensions(winX + winW - 84, winY + 6, 74, 20).build();
         this.addDrawableChild(closeButton);
 
         buildNav();
@@ -694,6 +694,21 @@ public class GiveawayScreen extends Screen {
         return value ? "ENTF." : "BEHALTEN";
     }
 
+    /** Relative Zeitangabe für die Teilnehmerliste („vor 5 Min“). */
+    private static String timeAgo(long time) {
+        long diff = System.currentTimeMillis() - time;
+        if (diff < 60_000L) {
+            return "gerade eben";
+        }
+        if (diff < 3_600_000L) {
+            return "vor " + (diff / 60_000L) + " Min";
+        }
+        if (diff < 86_400_000L) {
+            return "vor " + (diff / 3_600_000L) + " Std";
+        }
+        return "vor " + (diff / 86_400_000L) + " Tagen";
+    }
+
     private void updateWheelSpin() {
         if (!wheelSpinning) {
             return;
@@ -783,21 +798,14 @@ public class GiveawayScreen extends Screen {
     // ---------------- Fenster / Sidebar / Header ----------------
 
     private void drawWindow(DrawContext context) {
-        // Hintergrund-Verlauf (Desktop-Wallpaper-Gefühl)
+        // Hintergrund-Verlauf + hochauflösendes Panel (keine Fenster-Optik)
         GuiUtil.gradientV(context, 0, 0, this.width, this.height, 0xFF0D1117, 0xFF131720);
         GuiUtil.shadow(context, winX, winY, winX + winW, winY + winH, 12);
         GuiUtil.roundedRect(context, winX, winY, winX + winW, winY + winH, 12, GuiUtil.PANEL);
         GuiUtil.roundedBorder(context, winX, winY, winX + winW, winY + winH, 12, GuiUtil.BORDER);
-        // Titelleiste
-        GuiUtil.roundedRect(context, winX, winY, winX + winW, winY + 30, 12, GuiUtil.PANEL_DARK);
-        context.fill(winX, winY + 28, winX + winW, winY + 30, GuiUtil.BORDER_SOFT);
-        // Fensterknöpfe (Ampel)
-        GuiUtil.fillCircle(context, winX + 16, winY + 15, 5, 0xFFF85149);
-        GuiUtil.fillCircle(context, winX + 32, winY + 15, 5, 0xFFFFC94D);
-        GuiUtil.fillCircle(context, winX + 48, winY + 15, 5, 0xFF3FB950);
         TextRenderer tr = this.textRenderer;
-        context.drawText(tr, "GorgiiBot Giveaway", winX + 62, winY + 11, GuiUtil.TEXT, false);
-        context.drawText(tr, "Twitch · Glücksrad & Roulette", winX + 62, winY + 20, GuiUtil.TEXT_FAINT, false);
+        context.drawText(tr, "GorgiiBot Giveaway", winX + 14, winY + 8, GuiUtil.TEXT, false);
+        context.drawText(tr, "Twitch · Glücksrad & Roulette", winX + 14, winY + 17, GuiUtil.TEXT_FAINT, false);
     }
 
     private void drawSidebar(DrawContext context) {
@@ -1129,7 +1137,7 @@ public class GiveawayScreen extends Screen {
         int infoY = contentY + contentH - 52;
         GuiUtil.roundedRect(context, contentX, infoY, contentX + contentW, infoY + 44, 8, GuiUtil.PANEL_DARK);
         GuiUtil.roundedBorder(context, contentX, infoY, contentX + contentW, infoY + 44, 8, GuiUtil.BORDER);
-        context.drawText(tr, "Tipp für den Desktop-Look: GUI-Skala in den Minecraft-Optionen auf", contentX + 10,
+        context.drawText(tr, "Tipp für die hohe Auflösung: GUI-Skala in den Minecraft-Optionen auf", contentX + 10,
                 infoY + 6, GuiUtil.TEXT_DIM, false);
         context.drawText(tr, "„Automatisch“ oder 3–4 stellen – das Fenster wirkt dann wie ein echtes Programm.",
                 contentX + 10, infoY + 17, GuiUtil.TEXT_DIM, false);
@@ -1140,10 +1148,6 @@ public class GiveawayScreen extends Screen {
     // ---------------- Icon-Overlays (nach super.render) ----------------
 
     private void drawIconOverlays(DrawContext context) {
-        // Fenster schließen
-        if (closeButton != null) {
-            GuiIcons.close(context, closeButton.getX() + 4, closeButton.getY() + 1, GuiUtil.TEXT_DIM);
-        }
         // Paginierung
         if (prevButton != null) {
             GuiIcons.arrowLeft(context, prevButton.getX() + 6, prevButton.getY() + 2, GuiUtil.TEXT);

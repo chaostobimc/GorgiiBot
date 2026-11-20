@@ -283,7 +283,7 @@ public class RouletteView {
                           Participant p, int cardX, int cardTop, boolean highlighted) {
         int x2 = cardX + CARD_WIDTH;
         int y2 = cardTop + CARD_HEIGHT;
-        // Schatten + abgerundete Karte (Desktop-Look)
+        // Schatten + abgerundete Karte
         GuiUtil.roundedRect(context, cardX + 2, cardTop + 3, x2 + 2, y2 + 3, 8, 0x66000000);
         GuiUtil.roundedRect(context, cardX, cardTop, x2, y2, 8, highlighted ? 0xFF2A2410 : 0xFF1B1E24);
         GuiUtil.roundedBorder(context, cardX, cardTop, x2, y2, 8, highlighted ? ACCENT : 0xFF343945);

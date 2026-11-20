@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Gewinner-Screen im Desktop-Theme: großer Avatar, Name, <b>live</b>
+ * Gewinner-Screen: großer Avatar, Name, <b>live</b>
  * mitlaufender Chat-Verlauf, Bestätigungs-Countdown (der Gewinner muss sich
  * im Chat melden), Konfetti und Fanfare. Meldet sich niemand, folgt nach
  * Ablauf der Zeit automatisch ein Reroll – genau wie in der Web-App.
@@ -151,12 +151,6 @@ public class WinnerScreen extends Screen {
         GuiUtil.shadow(context, px, py, px + pw, py + ph, 12);
         GuiUtil.roundedRect(context, px, py, px + pw, py + ph, 12, GuiUtil.PANEL);
         GuiUtil.roundedBorder(context, px, py, px + pw, py + ph, 12, GuiUtil.ACCENT);
-        // Titelleiste
-        GuiUtil.roundedRect(context, px, py, px + pw, py + 26, 12, GuiUtil.PANEL_DARK);
-        context.fill(px, py + 24, px + pw, py + 26, GuiUtil.BORDER_SOFT);
-        GuiUtil.fillCircle(context, px + 16, py + 13, 5, 0xFFF85149);
-        GuiUtil.fillCircle(context, px + 32, py + 13, 5, 0xFFFFC94D);
-        GuiUtil.fillCircle(context, px + 48, py + 13, 5, 0xFF3FB950);
 
         String title = state.isRerollClaim() ? "GEWINNER (REROLL)" : "GEWINNER";
         GuiUtil.drawCenteredText(context, tr, title, px + pw / 2, py + 36, GuiUtil.ACCENT, false);

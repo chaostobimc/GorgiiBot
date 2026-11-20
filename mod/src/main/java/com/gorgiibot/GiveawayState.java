@@ -142,10 +142,10 @@ public class GiveawayState {
             out.add(p);
         }
         Comparator<Participant> cmp = switch (sort == null ? SortMode.NEWEST : sort) {
-            case OLDEST -> Comparator.comparingLong(p -> p.joinedAt);
-            case AZ -> Comparator.comparing(p -> p.lower);
-            case ZA -> Comparator.comparing(p -> p.lower).reversed();
-            case NEWEST -> Comparator.comparingLong(p -> p.joinedAt).reversed();
+            case OLDEST -> Comparator.comparingLong((Participant p) -> p.joinedAt);
+            case AZ -> Comparator.comparing((Participant p) -> p.lower);
+            case ZA -> Comparator.comparing((Participant p) -> p.lower).reversed();
+            case NEWEST -> Comparator.comparingLong((Participant p) -> p.joinedAt).reversed();
         };
         out.sort(cmp);
         return out;
@@ -376,9 +376,9 @@ public class GiveawayState {
             out.add(new BannedEntry(e.getKey(), e.getValue()));
         }
         Comparator<BannedEntry> cmp = switch (sort == null ? SortMode.AZ : sort) {
-            case NEWEST, OLDEST -> Comparator.comparing(b -> b.lower);
-            case ZA -> Comparator.comparing(b -> b.lower).reversed();
-            case AZ -> Comparator.comparing(b -> b.lower);
+            case NEWEST, OLDEST -> Comparator.comparing((BannedEntry b) -> b.lower);
+            case ZA -> Comparator.comparing((BannedEntry b) -> b.lower).reversed();
+            case AZ -> Comparator.comparing((BannedEntry b) -> b.lower);
         };
         out.sort(cmp);
         return out;

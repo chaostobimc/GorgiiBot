@@ -3,7 +3,7 @@ package com.gorgiibot.gui;
 import net.minecraft.client.gui.DrawContext;
 
 /**
- * Vektor-Icons (16×16) für die Desktop-UI: Entfernen, Bannen, Entbannen,
+ * Vektor-Icons (16×16) für die UI: Entfernen, Bannen, Entbannen,
  * Suche, Navigation, Status. Rein aus Füll-Rechtecken gezeichnet – keine
  * Texturen, keine Emoji-Font nötig, in jedem GUI-Maßstab scharf.
  */
