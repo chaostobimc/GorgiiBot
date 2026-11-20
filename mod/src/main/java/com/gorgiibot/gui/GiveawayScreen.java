@@ -12,7 +12,6 @@ import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.TextFieldWidget;
 import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -255,7 +254,7 @@ public class GiveawayScreen extends Screen {
                 Text.literal("Suche"));
         searchField.setMaxLength(32);
         searchField.setText(searchText);
-        searchField.setPlaceholder(Text.literal("Suchen …"));
+        searchField.setPlaceholder(Text.literal("Suchen"));
         searchField.setChangedListener(text -> {
             searchText = text;
             page = 0;
@@ -296,7 +295,7 @@ public class GiveawayScreen extends Screen {
                 Text.literal("Hinzufügen"));
         addField.setMaxLength(32);
         addField.setText(addText);
-        addField.setPlaceholder(Text.literal("Name …"));
+        addField.setPlaceholder(Text.literal("Name"));
         addField.setChangedListener(text -> addText = text);
         this.addDrawableChild(addField);
 
@@ -331,8 +330,7 @@ public class GiveawayScreen extends Screen {
         for (int i = 0; i < rows; i++) {
             int ry = listTop + i * ROW_PITCH;
             int slot = i;
-            rowRemoveButtons[i] = ButtonWidget.builder(
-                            Text.literal("X").formatted(Formatting.RED), b -> {
+            rowRemoveButtons[i] = ButtonWidget.builder(Text.literal("X"), b -> {
                                 Participant p = participantAtSlot(slot);
                                 if (p != null) {
                                     state.remove(p.lower);
@@ -340,8 +338,7 @@ public class GiveawayScreen extends Screen {
                                 }
                             }).dimensions(removeX, ry + 2, 18, 18).build();
             this.addDrawableChild(rowRemoveButtons[i]);
-            rowBanButtons[i] = ButtonWidget.builder(
-                            Text.literal("Bann").formatted(Formatting.RED), b -> {
+            rowBanButtons[i] = ButtonWidget.builder(Text.literal("Bann"), b -> {
                                 Participant p = participantAtSlot(slot);
                                 if (p != null) {
                                     state.ban(p.lower, p.name);
@@ -359,7 +356,7 @@ public class GiveawayScreen extends Screen {
                 Text.literal("Suche"));
         bannedSearchField.setMaxLength(32);
         bannedSearchField.setText(bannedSearchText);
-        bannedSearchField.setPlaceholder(Text.literal("Suchen …"));
+        bannedSearchField.setPlaceholder(Text.literal("Suchen"));
         bannedSearchField.setChangedListener(text -> {
             bannedSearchText = text;
             bannedPage = 0;
@@ -392,8 +389,7 @@ public class GiveawayScreen extends Screen {
         for (int i = 0; i < rows; i++) {
             int ry = listTop + i * ROW_PITCH;
             int slot = i;
-            rowUnbanButtons[i] = ButtonWidget.builder(
-                            Text.literal("Frei").formatted(Formatting.GREEN), b -> {
+            rowUnbanButtons[i] = ButtonWidget.builder(Text.literal("Frei"), b -> {
                                 GiveawayState.BannedEntry e = bannedAtSlot(slot);
                                 if (e != null) {
                                     state.unban(e.lower());
@@ -622,7 +618,7 @@ public class GiveawayScreen extends Screen {
             connectButton.setMessage(Text.literal(connected ? "Trennen" : "Verbinden"));
         }
         if (startButton != null) {
-            startButton.setMessage(Text.literal(busy ? "Läuft …" : pending ? "Warte …" : "Start"));
+            startButton.setMessage(Text.literal(busy ? "Läuft" : pending ? "Warte" : "Start"));
             startButton.active = !busy && !pending && state.count() > 0;
         }
         if (resetButton != null) {
@@ -688,8 +684,8 @@ public class GiveawayScreen extends Screen {
         return switch (v) {
             case WHEEL -> "Glücksrad";
             case ROULETTE -> "Roulette";
-            case PARTICIPANTS -> "Teilnehmer " + state.count();
-            case BANNED -> "Gesperrt " + state.bannedCount();
+            case PARTICIPANTS -> "Teilnehmer (" + state.count() + ")";
+            case BANNED -> "Gesperrt (" + state.bannedCount() + ")";
             case SETTINGS -> "Einstellungen";
         };
     }
@@ -728,21 +724,6 @@ public class GiveawayScreen extends Screen {
 
     private static String removeLabel(boolean value) {
         return value ? "entfernen" : "behalten";
-    }
-
-    /** Relative Zeitangabe für die Teilnehmerliste („vor 5 Min“). */
-    private static String timeAgo(long time) {
-        long diff = System.currentTimeMillis() - time;
-        if (diff < 60_000L) {
-            return "gerade eben";
-        }
-        if (diff < 3_600_000L) {
-            return "vor " + (diff / 60_000L) + " Min";
-        }
-        if (diff < 86_400_000L) {
-            return "vor " + (diff / 3_600_000L) + " Std";
-        }
-        return "vor " + (diff / 86_400_000L) + " Tagen";
     }
 
     private void updateWheelSpin() {
@@ -815,7 +796,7 @@ public class GiveawayScreen extends Screen {
         // Kein renderBackground(): Blur ist nur 1× pro Frame erlaubt.
         // Stattdessen der typische Vanilla-Verlauf von dunkel nach dunkler.
         context.fillGradient(0, 0, this.width, this.height, GuiUtil.BACKDROP, 0xF0101010);
-        GuiUtil.drawCenteredText(context, this.textRenderer, "GorgiiBot Giveaway",
+        GuiUtil.drawCenteredText(context, this.textRenderer, "Giveaway",
                 this.width / 2, 6, GuiUtil.TEXT, true);
 
         switch (view) {
@@ -858,21 +839,15 @@ public class GiveawayScreen extends Screen {
             int py = cy - size / 2 - 2;
             for (int k = 0; k < 6; k++) {
                 int barW = 18 - k * 3;
-                context.fill(cx - barW / 2, py + k * 3, cx + (barW + 1) / 2, py + 3 + k * 3, GuiUtil.GOLD);
+                context.fill(cx - barW / 2, py + k * 3, cx + (barW + 1) / 2, py + 3 + k * 3, GuiUtil.TEXT);
             }
             if (pool.isEmpty()) {
                 GuiUtil.drawCenteredText(context, tr, "Keine Teilnehmer", cx, cy - 4, GuiUtil.TEXT_DIM, true);
-                GuiUtil.drawCenteredText(context, tr, "Chat: " + state.config.keyword, cx, cy + 8,
-                        GuiUtil.TEXT_FAINT, true);
             }
         } else {
             int stripH = RouletteView.CARD_HEIGHT + 24;
             int stripY = top + (height - stripH) / 2;
             roulette.draw(context, tr, state.avatars, contentX + 2, stripY, stageW - 4, stripH);
-            if (pool.isEmpty()) {
-                GuiUtil.drawCenteredText(context, tr, "Keine Teilnehmer - Chat: " + state.config.keyword,
-                        contentX + stageW / 2, stripY + stripH - 8, GuiUtil.TEXT_FAINT, true);
-            }
         }
         drawStagePanel(context, tr);
     }
@@ -891,9 +866,9 @@ public class GiveawayScreen extends Screen {
                 : status == TwitchIrcClient.Status.CONNECTING ? GuiUtil.YELLOW
                 : status == TwitchIrcClient.Status.ERROR ? GuiUtil.RED : GuiUtil.TEXT_FAINT;
         String label = status == TwitchIrcClient.Status.CONNECTED ? "Verbunden"
-                : status == TwitchIrcClient.Status.CONNECTING ? "Verbinde ..."
+                : status == TwitchIrcClient.Status.CONNECTING ? "Verbinde"
                 : status == TwitchIrcClient.Status.ERROR ? "Fehler" : "Getrennt";
-        context.drawText(tr, "Twitch", tx, ty, GuiUtil.TEXT_DIM, true);
+        context.drawText(tr, "Kanal", tx, ty, GuiUtil.TEXT_DIM, true);
         ty += 11;
         context.drawText(tr, label, tx, ty, color, true);
         ty += 11;
@@ -909,7 +884,7 @@ public class GiveawayScreen extends Screen {
         context.drawText(tr, String.valueOf(state.count()), tx, ty, GuiUtil.TEXT, true);
         ty += 14;
 
-        context.drawText(tr, "Wort", tx, ty, GuiUtil.TEXT_DIM, true);
+        context.drawText(tr, "Stichwort", tx, ty, GuiUtil.TEXT_DIM, true);
         ty += 11;
         context.drawText(tr, GuiUtil.trimToWidth(tr, state.config.keyword, maxW), tx, ty,
                 GuiUtil.TEXT, true);
@@ -919,7 +894,7 @@ public class GiveawayScreen extends Screen {
         if (last != null && ty < contentY + stageH - 104) {
             context.drawText(tr, "Letzter Gewinner", tx, ty, GuiUtil.TEXT_DIM, true);
             ty += 11;
-            context.drawText(tr, GuiUtil.trimToWidth(tr, last.name, maxW), tx, ty, GuiUtil.GOLD, true);
+            context.drawText(tr, GuiUtil.trimToWidth(tr, last.name, maxW), tx, ty, GuiUtil.TEXT, true);
         }
     }
 
@@ -937,13 +912,13 @@ public class GiveawayScreen extends Screen {
             statusText = "Bestätigt";
             statusColor = GuiUtil.GREEN;
         } else if (state.isClaimExpired()) {
-            statusText = "Zeit abgelaufen - Reroll ...";
+            statusText = "Zeit abgelaufen";
             statusColor = GuiUtil.RED;
         } else {
             statusText = "Warte auf Bestätigung";
-            statusColor = GuiUtil.YELLOW;
+            statusColor = GuiUtil.TEXT;
         }
-        String left = (state.isRerollClaim() ? "Reroll: " : "") + statusText + " - @" + winner.name;
+        String left = (state.isRerollClaim() ? "Reroll: " : "") + statusText + "  @" + winner.name;
         context.drawText(tr, GuiUtil.trimToWidth(tr, left, w - 70), x + 6, y + 4, statusColor, true);
         long remain = state.claimRemainMs();
         long total = state.claimTotalMs();
@@ -953,7 +928,7 @@ public class GiveawayScreen extends Screen {
 
         int barW = w - 12;
         int filled = total <= 0 ? 0 : (int) (barW * Math.max(0, Math.min(1, remain / (double) total)));
-        int barColor = state.isClaimed() ? GuiUtil.GREEN : remain < 10_000 ? GuiUtil.RED : GuiUtil.YELLOW;
+        int barColor = state.isClaimed() ? GuiUtil.GREEN : state.isClaimExpired() ? GuiUtil.RED : 0xFFAAAAAA;
         context.fill(x + 6, y + h - 8, x + 6 + barW, y + h - 4, 0xFF202020);
         if (filled > 1) {
             context.fill(x + 6, y + h - 8, x + 6 + filled, y + h - 4, barColor);
@@ -979,8 +954,7 @@ public class GiveawayScreen extends Screen {
                 GuiUtil.PANEL, GuiUtil.BORDER);
 
         if (total == 0) {
-            String msg = searchText.isEmpty() ? "Noch keine Teilnehmer - Chat: " + state.config.keyword
-                    : "Keine Treffer";
+            String msg = searchText.isEmpty() ? "Keine Teilnehmer" : "Keine Treffer";
             GuiUtil.drawCenteredText(context, tr, msg, contentX + contentW / 2, listTop + 8,
                     GuiUtil.TEXT_FAINT, true);
         }
@@ -1010,12 +984,11 @@ public class GiveawayScreen extends Screen {
             String name = p.name + badge;
             context.drawText(tr, GuiUtil.trimToWidth(tr, name, textW), contentX + 22, ry + 3,
                     p.color, true);
-            String sub = "@" + p.lower + " - " + timeAgo(p.joinedAt);
-            context.drawText(tr, GuiUtil.trimToWidth(tr, sub, textW), contentX + 22, ry + 12,
+            context.drawText(tr, GuiUtil.trimToWidth(tr, "@" + p.lower, textW), contentX + 22, ry + 12,
                     GuiUtil.TEXT_FAINT, true);
         }
 
-        String foot = total + " Teilnehmer" + (searchText.isEmpty() ? "" : " (gefiltert)");
+        String foot = total + " Teilnehmer";
         context.drawText(tr, foot, contentX, contentY + contentH - 14, GuiUtil.TEXT_FAINT, true);
     }
 
@@ -1065,7 +1038,7 @@ public class GiveawayScreen extends Screen {
             int color = GiveawayState.fallbackColor(e.lower());
             drawAvatar(context, tr, e.lower(), e.display(), color, contentX + 3, ry + 3, 16);
             context.drawText(tr, GuiUtil.trimToWidth(tr, e.display(), textW), contentX + 22, ry + 3,
-                    GuiUtil.RED, true);
+                    GuiUtil.TEXT, true);
             context.drawText(tr, GuiUtil.trimToWidth(tr, "@" + e.lower(), textW), contentX + 22,
                     ry + 12, GuiUtil.TEXT_FAINT, true);
         }
@@ -1079,17 +1052,13 @@ public class GiveawayScreen extends Screen {
     private void drawSettings(DrawContext context) {
         TextRenderer tr = this.textRenderer;
         if (channelField != null) {
-            context.drawText(tr, "Twitch-Kanal (ohne #):", channelField.getX(),
+            context.drawText(tr, "Kanal", channelField.getX(),
                     channelField.getY() - 10, GuiUtil.TEXT_DIM, true);
         }
         if (keywordField != null) {
-            context.drawText(tr, "Schlüsselwort für Teilnahme:", keywordField.getX(),
+            context.drawText(tr, "Stichwort", keywordField.getX(),
                     keywordField.getY() - 10, GuiUtil.TEXT_DIM, true);
         }
-        int infoY = contentY + contentH - 12;
-        String info = "Gespeichert in config/gorgiibot.json - Gesperrte können erst nach dem Entbannen wieder teilnehmen.";
-        context.drawText(tr, GuiUtil.trimToWidth(tr, info, contentW - 8), contentX + 4, infoY,
-                GuiUtil.TEXT_FAINT, true);
     }
 
     private void drawAvatar(DrawContext context, TextRenderer tr, String lower, String name, int color,

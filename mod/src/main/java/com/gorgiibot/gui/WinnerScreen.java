@@ -150,8 +150,8 @@ public class WinnerScreen extends Screen {
         int py = (this.height - ph) / 2;
         GuiUtil.panel(context, px, py, px + pw, py + ph, GuiUtil.PANEL, GuiUtil.BORDER);
 
-        String title = state.isRerollClaim() ? "GEWINNER (REROLL)" : "GEWINNER";
-        GuiUtil.drawCenteredText(context, tr, title, px + pw / 2, py + 8, GuiUtil.GOLD, true);
+        String title = state.isRerollClaim() ? "Gewinner (Reroll)" : "Gewinner";
+        GuiUtil.drawCenteredText(context, tr, title, px + pw / 2, py + 8, GuiUtil.TEXT, true);
 
         int avatarSize = 64;
         int ax = px + pw / 2 - avatarSize / 2;
@@ -178,16 +178,16 @@ public class WinnerScreen extends Screen {
         String status;
         int statusColor;
         if (claimed) {
-            status = "Bestätigt - Glückwunsch!";
+            status = "Bestätigt";
             statusColor = GuiUtil.GREEN;
         } else if (expired) {
-            status = "Zeit abgelaufen - Reroll startet ...";
+            status = "Zeit abgelaufen";
             statusColor = GuiUtil.RED;
         } else if (pending) {
-            status = "Warte auf Bestätigung im Chat ...";
-            statusColor = GuiUtil.YELLOW;
+            status = "Warte auf Bestätigung";
+            statusColor = GuiUtil.TEXT;
         } else {
-            status = "Bestätigung beendet";
+            status = "Beendet";
             statusColor = GuiUtil.TEXT_DIM;
         }
         GuiUtil.drawCenteredText(context, tr, GuiUtil.trimToWidth(tr, status, pw - 24),
@@ -200,7 +200,7 @@ public class WinnerScreen extends Screen {
         int barY = py + 136;
         context.fill(barX, barY, barX + barW, barY + 4, 0xFF202020);
         int filled = total <= 0 ? 0 : (int) (barW * Math.max(0, Math.min(1, remain / (double) total)));
-        int barColor = claimed ? GuiUtil.GREEN : remain < 10_000 ? GuiUtil.RED : GuiUtil.YELLOW;
+        int barColor = claimed ? GuiUtil.GREEN : expired ? GuiUtil.RED : 0xFFAAAAAA;
         if (filled > 1) {
             context.fill(barX, barY, barX + filled, barY + 4, barColor);
         }
@@ -210,10 +210,10 @@ public class WinnerScreen extends Screen {
 
         // ---- Chat-Verlauf (live) ----
         int hy = barY + 22;
-        context.drawText(tr, "Chat-Verlauf:", px + 20, hy, GuiUtil.TEXT_DIM, true);
+        context.drawText(tr, "Chat", px + 20, hy, GuiUtil.TEXT_DIM, true);
         hy += 11;
         if (history.isEmpty()) {
-            context.drawText(tr, "Noch keine Nachrichten", px + 20, hy, GuiUtil.TEXT_FAINT, true);
+            context.drawText(tr, "-", px + 20, hy, GuiUtil.TEXT_FAINT, true);
         } else {
             int shown = Math.min(4, history.size());
             int start = history.size() - shown;

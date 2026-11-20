@@ -47,7 +47,7 @@ public class RouletteView {
     /** Idle-Geschwindigkeit der Web-App (px/s). */
     private static final float IDLE_SPEED = 45f;
     private static final int MAX_IDLE_CARDS = 400;
-    private static final int ACCENT = 0xFFFFAA00;
+    private static final int MARKER = 0xFFFFFFFF;
 
     private enum Mode {
         IDLE, SPINNING, LANDED
@@ -77,7 +77,7 @@ public class RouletteView {
     private Mode mode = Mode.IDLE;
     private Participant winner;
     private WinCallback callback;
-    private String hint = "Noch keine Teilnehmer – ab in den Chat!";
+    private String hint = "Keine Teilnehmer";
 
     public boolean isSpinning() {
         return mode == Mode.SPINNING;
@@ -113,7 +113,7 @@ public class RouletteView {
         idleCards.clear();
         idleSetWidth = 0;
         if (pool.isEmpty()) {
-            hint = "Noch keine Teilnehmer – ab in den Chat!";
+            hint = "Keine Teilnehmer";
             return;
         }
         if (pool.size() == 1) {
@@ -269,12 +269,12 @@ public class RouletteView {
     /** Marker: Mittellinie + Pfeile oben/unten. */
     private void drawMarker(DrawContext context, int x, int y, int width, int height) {
         int centerX = x + width / 2;
-        context.fill(centerX - 1, y + 6, centerX + 1, y + height - 6, ACCENT);
+        context.fill(centerX - 1, y + 6, centerX + 1, y + height - 6, MARKER);
         for (int k = 0; k < 5; k++) {
             int w = 14 - k * 3;
-            context.fill(centerX - w / 2, y + 6 + k * 3, centerX + (w + 1) / 2, y + 9 + k * 3, ACCENT);
+            context.fill(centerX - w / 2, y + 6 + k * 3, centerX + (w + 1) / 2, y + 9 + k * 3, MARKER);
             context.fill(centerX - w / 2, y + height - 9 - k * 3, centerX + (w + 1) / 2,
-                    y + height - 6 - k * 3, ACCENT);
+                    y + height - 6 - k * 3, MARKER);
         }
     }
 
@@ -283,10 +283,10 @@ public class RouletteView {
         int x2 = cardX + CARD_WIDTH;
         int y2 = cardTop + CARD_HEIGHT;
         // Flache Karte im Minecraft-Stil
-        GuiUtil.panel(context, cardX, cardTop, x2, y2, highlighted ? 0xC0201A00 : 0xC0101010,
-                highlighted ? ACCENT : 0xFF404040);
+        GuiUtil.panel(context, cardX, cardTop, x2, y2, 0xC0101010,
+                highlighted ? MARKER : 0xFF404040);
         if (highlighted) {
-            GuiUtil.fillBorder(context, cardX + 1, cardTop + 1, x2 - 1, y2 - 1, ACCENT);
+            GuiUtil.fillBorder(context, cardX + 1, cardTop + 1, x2 - 1, y2 - 1, MARKER);
         }
         int ax = cardX + (CARD_WIDTH - AVATAR) / 2;
         int ay = cardTop + 10;
