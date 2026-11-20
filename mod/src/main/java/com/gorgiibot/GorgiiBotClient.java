@@ -1,7 +1,6 @@
 package com.gorgiibot;
 
 import com.gorgiibot.gui.GiveawayScreen;
-import com.gorgiibot.gui.SettingsScreen;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
@@ -16,7 +15,7 @@ import org.lwjgl.glfw.GLFW;
 /**
  * Client-Einstiegspunkt des GorgiiBot-Giveaway-Mods.
  *
- * <p>Registriert Taste (G), Client-Command (/giveaway) und Tick-Handler.
+ * <p>Registriert Taste (G), Client-Commands (/giveaway …) und Tick-Handler.
  * Der Mod ist rein clientseitig und braucht keinen Server-Mod.
  */
 public class GorgiiBotClient implements ClientModInitializer {
@@ -41,13 +40,37 @@ public class GorgiiBotClient implements ClientModInitializer {
         });
 
         ClientCommandRegistrationCallback.EVENT.register((dispatcher, registryAccess) -> dispatcher.register(
-                ClientCommandManager.literal("giveaway").executes(context -> {
-                    // Der Befehl kann außerhalb des Render-Threads laufen:
-                    // Screen-Wechsel daher immer in den Client-Thread verlagern.
-                    MinecraftClient client = context.getSource().getClient();
-                    client.execute(() -> client.setScreen(new GiveawayScreen()));
-                    return 1;
-                })));
+                ClientCommandManager.literal("giveaway")
+                        .executes(context -> {
+                            MinecraftClient client = context.getSource().getClient();
+                            client.execute(() -> client.setScreen(new GiveawayScreen()));
+                            return 1;
+                        })
+                        .then(ClientCommandManager.literal("rad").executes(context -> {
+                            MinecraftClient client = context.getSource().getClient();
+                            client.execute(() -> client.setScreen(new GiveawayScreen(GiveawayScreen.View.WHEEL)));
+                            return 1;
+                        }))
+                        .then(ClientCommandManager.literal("roulette").executes(context -> {
+                            MinecraftClient client = context.getSource().getClient();
+                            client.execute(() -> client.setScreen(new GiveawayScreen(GiveawayScreen.View.ROULETTE)));
+                            return 1;
+                        }))
+                        .then(ClientCommandManager.literal("teilnehmer").executes(context -> {
+                            MinecraftClient client = context.getSource().getClient();
+                            client.execute(() -> client.setScreen(new GiveawayScreen(GiveawayScreen.View.PARTICIPANTS)));
+                            return 1;
+                        }))
+                        .then(ClientCommandManager.literal("gesperrt").executes(context -> {
+                            MinecraftClient client = context.getSource().getClient();
+                            client.execute(() -> client.setScreen(new GiveawayScreen(GiveawayScreen.View.BANNED)));
+                            return 1;
+                        }))
+                        .then(ClientCommandManager.literal("einstellungen").executes(context -> {
+                            MinecraftClient client = context.getSource().getClient();
+                            client.execute(() -> client.setScreen(new GiveawayScreen(GiveawayScreen.View.SETTINGS)));
+                            return 1;
+                        }))));
     }
 
     private void handleOpenKey(MinecraftClient client) {
@@ -56,9 +79,6 @@ public class GorgiiBotClient implements ClientModInitializer {
         } else if (client.currentScreen instanceof GiveawayScreen screen
                 && !(screen.getFocused() instanceof TextFieldWidget)) {
             client.setScreen(null);
-        } else if (client.currentScreen instanceof SettingsScreen screen
-                && !(screen.getFocused() instanceof TextFieldWidget)) {
-            screen.saveAndClose();
         }
     }
 }

@@ -17,10 +17,10 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Gewinner-Screen: großer Avatar, Name, <b>live</b> mitlaufender Chat-Verlauf,
- * Bestätigungs-Countdown (der Gewinner muss sich im Chat melden), Konfetti und
- * Fanfare. Meldet sich niemand, folgt nach Ablauf der Zeit automatisch ein
- * Reroll – genau wie in der Web-App.
+ * Gewinner-Screen im Desktop-Theme: großer Avatar, Name, <b>live</b>
+ * mitlaufender Chat-Verlauf, Bestätigungs-Countdown (der Gewinner muss sich
+ * im Chat melden), Konfetti und Fanfare. Meldet sich niemand, folgt nach
+ * Ablauf der Zeit automatisch ein Reroll – genau wie in der Web-App.
  */
 public class WinnerScreen extends Screen {
     private static final int[] CONFETTI_COLORS = {
@@ -65,17 +65,19 @@ public class WinnerScreen extends Screen {
                 spawnConfetti();
             }
         }
-        int pw = Math.min(420, this.width - 40);
+        int pw = Math.min(480, this.width - 40);
         int px = (this.width - pw) / 2;
-        int ph = 270;
-        int by = this.height / 2 + ph / 2 - 30;
-        int bw = (pw - 32) / 3;
+        int ph = 300;
+        int by = this.height / 2 + ph / 2 - 32;
+        int bw = (pw - 40) / 4;
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Neu ziehen"), b -> drawAgain())
-                .dimensions(px + 12, by, bw, 20).build());
+                .dimensions(px + 12, by, bw, 22).build());
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Entfernen"), b -> removeAndBack())
-                .dimensions(px + 16 + bw, by, bw, 20).build());
+                .dimensions(px + 16 + bw, by, bw, 22).build());
+        this.addDrawableChild(ButtonWidget.builder(Text.literal("Bannen"), b -> banAndBack())
+                .dimensions(px + 20 + bw * 2, by, bw, 22).build());
         this.addDrawableChild(ButtonWidget.builder(Text.literal("Zurück"), b -> back())
-                .dimensions(px + 20 + bw * 2, by, bw, 20).build());
+                .dimensions(px + 24 + bw * 3, by, bw, 22).build());
     }
 
     private void drawAgain() {
@@ -86,6 +88,11 @@ public class WinnerScreen extends Screen {
 
     private void removeAndBack() {
         state.remove(winner.lower);
+        back();
+    }
+
+    private void banAndBack() {
+        state.ban(winner.lower, winner.name);
         back();
     }
 
@@ -137,33 +144,40 @@ public class WinnerScreen extends Screen {
         context.fill(0, 0, this.width, this.height, 0xCC000000);
 
         TextRenderer tr = this.textRenderer;
-        int pw = Math.min(420, this.width - 40);
-        int ph = 270;
+        int pw = Math.min(480, this.width - 40);
+        int ph = 300;
         int px = (this.width - pw) / 2;
         int py = (this.height - ph) / 2;
-        context.fill(px, py, px + pw, py + ph, 0xFF14161B);
-        GuiUtil.fillBorder(context, px, py, px + pw, py + ph, 0xFFFFC94D);
+        GuiUtil.shadow(context, px, py, px + pw, py + ph, 12);
+        GuiUtil.roundedRect(context, px, py, px + pw, py + ph, 12, GuiUtil.PANEL);
+        GuiUtil.roundedBorder(context, px, py, px + pw, py + ph, 12, GuiUtil.ACCENT);
+        // Titelleiste
+        GuiUtil.roundedRect(context, px, py, px + pw, py + 26, 12, GuiUtil.PANEL_DARK);
+        context.fill(px, py + 24, px + pw, py + 26, GuiUtil.BORDER_SOFT);
+        GuiUtil.fillCircle(context, px + 16, py + 13, 5, 0xFFF85149);
+        GuiUtil.fillCircle(context, px + 32, py + 13, 5, 0xFFFFC94D);
+        GuiUtil.fillCircle(context, px + 48, py + 13, 5, 0xFF3FB950);
 
         String title = state.isRerollClaim() ? "GEWINNER (REROLL)" : "GEWINNER";
-        GuiUtil.drawCenteredText(context, tr, title, px + pw / 2, py + 14, 0xFFFFC94D, false);
+        GuiUtil.drawCenteredText(context, tr, title, px + pw / 2, py + 36, GuiUtil.ACCENT, false);
 
-        int avatarSize = 64;
+        int avatarSize = 80;
         int ax = px + pw / 2 - avatarSize / 2;
-        int ay = py + 32;
+        int ay = py + 52;
         AvatarManager.AvatarImage avatar = state.avatars.getAvatar(winner.lower);
         if (avatar != null) {
             GuiUtil.drawTexture(context, avatar.id(), ax, ay, avatarSize, avatarSize, avatar.size(),
                     avatar.size());
-            GuiUtil.fillBorder(context, ax, ay, ax + avatarSize, ay + avatarSize, 0x55343945);
+            GuiUtil.roundedBorder(context, ax, ay, ax + avatarSize, ay + avatarSize, 8, 0x55343945);
         } else {
-            context.fill(ax, ay, ax + avatarSize, ay + avatarSize, winner.color);
+            GuiUtil.roundedRect(context, ax, ay, ax + avatarSize, ay + avatarSize, 8, winner.color);
             String initial = winner.name.isEmpty() ? "?" : winner.name.substring(0, 1).toUpperCase();
             GuiUtil.drawCenteredText(context, tr, initial, px + pw / 2, ay + (avatarSize - 8) / 2,
                     0xFFFFFFFF, true);
         }
 
         GuiUtil.drawCenteredText(context, tr, GuiUtil.trimToWidth(tr, winner.name, pw - 40),
-                px + pw / 2, ay + avatarSize + 8, 0xFFFFFFFF, false);
+                px + pw / 2, ay + avatarSize + 8, GuiUtil.TEXT, false);
 
         // ---- Bestätigungs-Status ----
         boolean pending = state.isClaimPending();
@@ -173,50 +187,50 @@ public class WinnerScreen extends Screen {
         int statusColor;
         if (claimed) {
             status = "Bestätigt – Glückwunsch!";
-            statusColor = 0xFF3FB950;
+            statusColor = GuiUtil.GREEN;
         } else if (expired) {
             status = "Zeit abgelaufen – Reroll startet …";
-            statusColor = 0xFFF85149;
+            statusColor = GuiUtil.RED;
         } else if (pending) {
             status = "Warte auf Bestätigung im Chat …";
-            statusColor = 0xFFFFC94D;
+            statusColor = GuiUtil.YELLOW;
         } else {
             status = "Bestätigung beendet";
-            statusColor = 0xFF8B949E;
+            statusColor = GuiUtil.TEXT_DIM;
         }
         GuiUtil.drawCenteredText(context, tr, GuiUtil.trimToWidth(tr, status, pw - 24),
-                px + pw / 2, py + 118, statusColor, false);
+                px + pw / 2, py + 148, statusColor, false);
 
         long remain = state.claimRemainMs();
         long total = state.claimTotalMs();
         int barX = px + 20;
         int barW = pw - 40;
-        int barY = py + 132;
-        context.fill(barX, barY, barX + barW, barY + 5, 0xFF23262E);
+        int barY = py + 162;
+        GuiUtil.roundedRect(context, barX, barY, barX + barW, barY + 5, 2, 0xFF23262E);
         int filled = total <= 0 ? 0 : (int) (barW * Math.max(0, Math.min(1, remain / (double) total)));
-        int barColor = claimed ? 0xFF3FB950 : remain < 10_000 ? 0xFFF85149 : 0xFFFFC94D;
-        if (filled > 0) {
-            context.fill(barX, barY, barX + filled, barY + 5, barColor);
+        int barColor = claimed ? GuiUtil.GREEN : remain < 10_000 ? GuiUtil.RED : GuiUtil.YELLOW;
+        if (filled > 2) {
+            GuiUtil.roundedRect(context, barX, barY, barX + filled, barY + 5, 2, barColor);
         }
         String timerText = claimed ? "Bestätigt"
                 : pending ? "noch " + ((remain + 999) / 1000) + " s" : "0 s";
-        GuiUtil.drawCenteredText(context, tr, timerText, px + pw / 2, barY + 8, 0xFF8B949E, false);
+        GuiUtil.drawCenteredText(context, tr, timerText, px + pw / 2, barY + 8, GuiUtil.TEXT_DIM, false);
 
         // ---- Chat-Verlauf (live) ----
         int hy = barY + 24;
-        context.drawText(tr, "Chat-Verlauf:", px + 20, hy, 0xFF5B6470, false);
+        context.drawText(tr, "Chat-Verlauf:", px + 20, hy, GuiUtil.TEXT_FAINT, false);
         hy += 12;
         if (history.isEmpty()) {
             GuiUtil.drawCenteredText(context, tr, "Noch keine Nachrichten – warte auf den Chat",
-                    px + pw / 2, hy, 0xFF5B6470, false);
+                    px + pw / 2, hy, GuiUtil.TEXT_FAINT, false);
         } else {
-            int shown = Math.min(6, history.size());
+            int shown = Math.min(4, history.size());
             int start = history.size() - shown;
             for (int i = start; i < history.size(); i++) {
                 ChatLine line = history.get(i);
                 String row = line.displayName() + ": " + line.text();
                 context.drawText(tr, GuiUtil.trimToWidth(tr, row, pw - 40), px + 20, hy,
-                        i == history.size() - 1 ? 0xFFE6E6E6 : 0xFF8B949E, false);
+                        i == history.size() - 1 ? GuiUtil.TEXT : GuiUtil.TEXT_DIM, false);
                 hy += 11;
             }
         }

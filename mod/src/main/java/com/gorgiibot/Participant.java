@@ -6,7 +6,7 @@ import java.util.Locale;
 public class Participant {
     /** Anzeigename (Twitch display-name). */
     public final String name;
-    /** Kleingeschriebener Name als eindeutiger Schlüssel. */
+    /** Kleingeschriebener Login als eindeutiger Schlüssel (Twitch-Nick, nicht Display-Name). */
     public final String lower;
     /** Namensfarbe als ARGB (aus Twitch oder Ersatzpalette). */
     public int color;
@@ -15,11 +15,17 @@ public class Participant {
     /** Beitrittszeitpunkt (Millis). */
     public final long joinedAt;
 
-    public Participant(String displayName, int color, boolean boosted) {
-        this.name = displayName;
-        this.lower = displayName.toLowerCase(Locale.ROOT);
+    public Participant(String lower, String displayName, int color, boolean boosted) {
+        this.lower = lower.toLowerCase(Locale.ROOT);
+        this.name = displayName == null || displayName.isEmpty() ? this.lower : displayName;
         this.color = color;
         this.boosted = boosted;
         this.joinedAt = System.currentTimeMillis();
+    }
+
+    /** @deprecated Nur für Tests; bevorzugt die Konstruktor-Variante mit explizitem Login. */
+    @Deprecated
+    public Participant(String displayName, int color, boolean boosted) {
+        this(displayName == null ? "" : displayName.toLowerCase(Locale.ROOT), displayName, color, boosted);
     }
 }

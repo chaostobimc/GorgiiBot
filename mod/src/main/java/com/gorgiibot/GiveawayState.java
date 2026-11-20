@@ -7,6 +7,7 @@ import com.gorgiibot.twitch.TwitchIrcClient;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -15,8 +16,8 @@ import java.util.Map;
 import java.util.Random;
 
 /**
- * Zentraler Giveaway-Zustand: Teilnehmer, Chat-Verlauf, Gewinner-Bestätigung
- * und Dienste.
+ * Zentraler Giveaway-Zustand: Teilnehmer, Banliste, Chat-Verlauf,
+ * Gewinner-Bestätigung und Dienste.
  * Thread-sicher: Der IRC-Thread schreibt, der Render-Thread liest Momentaufnahmen.
  */
 public class GiveawayState {
@@ -24,6 +25,11 @@ public class GiveawayState {
     private static final int MAX_HISTORY_USERS = 3000;
     /** Pause zwischen „Zeit abgelaufen“ und dem automatischen Reroll (wie in der Web-App). */
     public static final long REROLL_DELAY_MS = 2200;
+
+    /** Sortierung der Teilnehmerliste (UI). */
+    public enum SortMode {
+        NEWEST, OLDEST, AZ, ZA
+    }
 
     /** Twitch-Standardfarben als Ersatz für Nutzer ohne eigene Farbe. */
     private static final int[] FALLBACK_COLORS = {
@@ -76,6 +82,10 @@ public class GiveawayState {
             claimMessage = line.text();
             confirmSoundPending = true; // Sound im Client-Thread abspielen
         }
+        // Gesperrte User nehmen nie teil (auch nicht per Keyword).
+        if (isBannedLocked(line.lower())) {
+            return;
+        }
         Participant existing = participants.get(line.lower());
         if (existing != null) {
             existing.color = line.color();
@@ -94,7 +104,8 @@ public class GiveawayState {
         if (config.requireSubscriber && !line.boosted()) {
             return;
         }
-        participants.put(line.lower(), new Participant(line.displayName(), line.color(), line.boosted()));
+        participants.put(line.lower(),
+                new Participant(line.lower(), line.displayName(), line.color(), line.boosted()));
         version++;
     }
 
@@ -114,6 +125,30 @@ public class GiveawayState {
     /** Momentaufnahme der Teilnehmer (sicher für den Render-Thread). */
     public synchronized List<Participant> snapshot() {
         return new ArrayList<>(participants.values());
+    }
+
+    /**
+     * Gefilterte + sortierte Momentaufnahme für die Teilnehmerliste.
+     * @param search  Suchbegriff (leer = alle), Groß-/Kleinschreibung egal
+     * @param sort    Sortierung
+     */
+    public synchronized List<Participant> snapshotFiltered(String search, SortMode sort) {
+        String needle = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        List<Participant> out = new ArrayList<>();
+        for (Participant p : participants.values()) {
+            if (!needle.isEmpty() && !p.lower.contains(needle) && !p.name.toLowerCase(Locale.ROOT).contains(needle)) {
+                continue;
+            }
+            out.add(p);
+        }
+        Comparator<Participant> cmp = switch (sort == null ? SortMode.NEWEST : sort) {
+            case OLDEST -> Comparator.comparingLong(p -> p.joinedAt);
+            case AZ -> Comparator.comparing(p -> p.lower);
+            case ZA -> Comparator.comparing(p -> p.lower).reversed();
+            case NEWEST -> Comparator.comparingLong(p -> p.joinedAt).reversed();
+        };
+        out.sort(cmp);
+        return out;
     }
 
     public synchronized int count() {
@@ -269,7 +304,116 @@ public class GiveawayState {
         return false;
     }
 
-    /** Setzt Teilnehmer, Verlauf und Gewinner zurück. */
+    // ---------------- Banliste ----------------
+
+    private boolean isBannedLocked(String lower) {
+        return lower != null && config.banned.containsKey(lower.toLowerCase(Locale.ROOT));
+    }
+
+    public synchronized boolean isBanned(String lower) {
+        return isBannedLocked(lower);
+    }
+
+    /**
+     * Sperrt einen User: Er wird aus dem Pool entfernt und kann nicht mehr
+     * teilnehmen (auch nicht per Keyword). Bleibt über Neustarts erhalten.
+     */
+    public synchronized boolean ban(String lower, String displayName) {
+        if (lower == null) {
+            return false;
+        }
+        String key = lower.trim().toLowerCase(Locale.ROOT);
+        if (key.isEmpty()) {
+            return false;
+        }
+        String display = displayName == null || displayName.isBlank() ? key : displayName.trim();
+        boolean changed = false;
+        if (!config.banned.containsKey(key)) {
+            config.banned.put(key, display);
+            changed = true;
+        }
+        if (participants.remove(key) != null) {
+            changed = true;
+            if (claimWinner != null && claimWinner.lower.equals(key) && !claimed && !claimExpired) {
+                endClaim();
+            }
+        }
+        if (changed) {
+            version++;
+            config.save();
+        }
+        return changed;
+    }
+
+    /** Hebt die Sperre auf. Der User kann danach wieder per Keyword teilnehmen. */
+    public synchronized boolean unban(String lower) {
+        if (lower == null) {
+            return false;
+        }
+        String key = lower.trim().toLowerCase(Locale.ROOT);
+        if (config.banned.remove(key) != null) {
+            version++;
+            config.save();
+            return true;
+        }
+        return false;
+    }
+
+    /** Momentaufnahme der Banliste (Login -> Anzeigename, Einfügereihenfolge). */
+    public synchronized Map<String, String> bannedSnapshot() {
+        return new LinkedHashMap<>(config.banned);
+    }
+
+    /** Gefilterte + sortierte Banliste für die UI (Einträge als "lower|display"). */
+    public synchronized List<BannedEntry> bannedFiltered(String search, SortMode sort) {
+        String needle = search == null ? "" : search.trim().toLowerCase(Locale.ROOT);
+        List<BannedEntry> out = new ArrayList<>();
+        for (Map.Entry<String, String> e : config.banned.entrySet()) {
+            if (!needle.isEmpty() && !e.getKey().contains(needle)
+                    && !e.getValue().toLowerCase(Locale.ROOT).contains(needle)) {
+                continue;
+            }
+            out.add(new BannedEntry(e.getKey(), e.getValue()));
+        }
+        Comparator<BannedEntry> cmp = switch (sort == null ? SortMode.AZ : sort) {
+            case NEWEST, OLDEST -> Comparator.comparing(b -> b.lower);
+            case ZA -> Comparator.comparing(b -> b.lower).reversed();
+            case AZ -> Comparator.comparing(b -> b.lower);
+        };
+        out.sort(cmp);
+        return out;
+    }
+
+    public synchronized int bannedCount() {
+        return config.banned.size();
+    }
+
+    /** Ein Eintrag der Banliste. */
+    public record BannedEntry(String lower, String display) {
+    }
+
+    /** Manuell einen Teilnehmer hinzufügen (z. B. per Name in der UI). */
+    public synchronized boolean addParticipant(String loginOrName) {
+        if (loginOrName == null) {
+            return false;
+        }
+        String clean = loginOrName.trim();
+        if (clean.startsWith("@")) {
+            clean = clean.substring(1);
+        }
+        if (clean.isEmpty()) {
+            return false;
+        }
+        String lower = clean.toLowerCase(Locale.ROOT);
+        if (participants.containsKey(lower) || isBannedLocked(lower)) {
+            return false;
+        }
+        participants.put(lower, new Participant(lower, clean, fallbackColor(lower), false));
+        version++;
+        return true;
+    }
+
+    /** Setzt Teilnehmer, Verlauf und Gewinner zurück (Banliste bleibt erhalten). */
     public synchronized void clear() {
         participants.clear();
         chatHistory.clear();
@@ -286,12 +430,12 @@ public class GiveawayState {
         };
         for (String name : names) {
             String lower = name.toLowerCase(Locale.ROOT);
-            if (participants.containsKey(lower)) {
+            if (participants.containsKey(lower) || isBannedLocked(lower)) {
                 continue;
             }
             boolean boosted = random.nextBoolean();
             int color = fallbackColor(lower);
-            participants.put(lower, new Participant(name, color, boosted));
+            participants.put(lower, new Participant(lower, name, color, boosted));
             Deque<ChatLine> deque = new ArrayDeque<>();
             deque.add(new ChatLine(lower, name, color, config.keyword + " ich will gewinnen!",
                     System.currentTimeMillis() - 60000, boosted));

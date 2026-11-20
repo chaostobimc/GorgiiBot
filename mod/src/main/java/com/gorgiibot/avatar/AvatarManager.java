@@ -2,6 +2,7 @@ package com.gorgiibot.avatar;
 
 import com.gorgiibot.GorgiiBotClient;
 import com.gorgiibot.GiveawayState;
+import com.gorgiibot.Participant;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
@@ -12,24 +13,33 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Lädt Twitch-Profilbilder (Avatar-URL via decapi.me, genau wie die Web-App)
- * und hält sie als GPU-Texturen vor. Netzwerk + Dekodieren laufen im
- * Hintergrund, nur die Textur-Registrierung passiert im Render-Thread.
+ * und hält sie als GPU-Texturen vor.
  *
- * <p>Wichtig für die Performance: Jeder Name wird höchstens gleichzeitig
- * einmal geladen, und nach einem Fehlschlag gibt es eine Sperrzeit. Sonst
- * würde jeder Frame einen neuen Download anstoßen (decapi.me drosselt dann
- * und es lädt gar nichts mehr).
+ * <p><b>Fix „nicht alle Profilbilder laden“:</b> Die alte Version lud nur die
+ * Avatare, die gerade sichtbar waren, und verwarf neue Anfragen, sobald 6
+ * Downloads parallel liefen. Bei vielen Teilnehmern (und im Roulette, wo
+ * während des Spins ständig neue Karten vorbeiscrollen) kamen dadurch viele
+ * Bilder nie an. Außerdem hämmerte sie decapi.me mit 3 parallelen Requests,
+ * woraufhin der Dienst drosselte und fast alles fehlschlug (60 s Sperre).
+ *
+ * <p>Jetzt gilt: <b>Eine Warteschlange, ein Worker, gedrosselt wie die
+ * Web-App</b> (1 Request, ~300 ms Pause). {@link #prefetch} lädt proaktiv
+ * <i>alle</i> Teilnehmer (nicht nur sichtbare), jeder Name steht höchstens
+ * einmal in der Schlange, Fehlschläge werden nach kurzer Zeit erneut
+ * versucht. Netzwerk + Dekodieren laufen im Hintergrund, nur die
+ * Textur-Registrierung passiert im Render-Thread.
  */
 public class AvatarManager {
     /** Geladener Avatar inkl. Texturgröße (für UVs). */
@@ -37,36 +47,39 @@ public class AvatarManager {
     }
 
     /** Alle Avatare werden auf diese Kantenlänge normiert (Power-of-Two, GPU-freundlich). */
-    private static final int TEX_SIZE = 64;
-    private static final int MAX_CACHED = 200;
-    private static final int MAX_IN_FLIGHT = 6;
-    /** Nach einem Fehlversuch so lange nicht erneut probieren. */
-    private static final long FAIL_COOLDOWN_MS = 60_000L;
+    private static final int TEX_SIZE = 128;
+    private static final int MAX_CACHED = 500;
+    /** Pause zwischen zwei Downloads (decapi.me-Schutz, wie die Web-App mit 400 ms). */
+    private static final long REQUEST_DELAY_MS = 300L;
+    /** Nach einem Fehlversuch so lange warten, bevor erneut versucht wird. */
+    private static final long FAIL_COOLDOWN_MS = 15_000L;
 
     private final HttpClient http = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(8))
             .followRedirects(HttpClient.Redirect.ALWAYS)
             .build();
 
-    private final ExecutorService pool;
+    /** Warteschlange aller noch zu ladenden Logins (Reihenfolge = Priorität). */
+    private final BlockingQueue<String> queue = new LinkedBlockingQueue<>();
+    /** Logins, die bereits in der Schlange oder im Download sind (Dedup). */
+    private final Set<String> queued = new HashSet<>();
+    /** Zwischengespeicherte decapi-URLs (spart einen Request bei Wiederholungen). */
+    private final Map<String, String> urlCache = new HashMap<>();
 
     /** LRU-Cache (access-order): Name -> Avatar. */
     private final Map<String, AvatarImage> cache = new LinkedHashMap<>(64, 0.75f, true);
-    private final Set<String> inFlight = new HashSet<>();
     private final Map<String, Long> failedAt = new HashMap<>();
 
     public AvatarManager() {
-        ThreadFactory factory = r -> {
-            Thread thread = new Thread(r, "GorgiiBot-Avatar");
-            thread.setDaemon(true);
-            return thread;
-        };
-        this.pool = Executors.newFixedThreadPool(3, factory);
+        Thread worker = new Thread(this::workerLoop, "GorgiiBot-Avatar");
+        worker.setDaemon(true);
+        worker.start();
     }
 
     /**
      * Gibt den Avatar zurück oder null, falls er noch lädt / fehlschlägt.
-     * Beim ersten Aufruf pro Name wird der Download im Hintergrund gestartet.
+     * Beim ersten Aufruf pro Name wird der Download in die Warteschlange
+     * gelegt (nie verworfen, auch bei vielen Teilnehmern).
      */
     public synchronized AvatarImage getAvatar(String lower) {
         if (!avatarsEnabled()) {
@@ -76,16 +89,54 @@ public class AvatarManager {
         if (cached != null) {
             return cached;
         }
-        if (inFlight.contains(lower) || inFlight.size() >= MAX_IN_FLIGHT) {
-            return null;
+        enqueueLocked(lower);
+        return null;
+    }
+
+    /**
+     * Lädt proaktiv alle Avatare einer Liste (z. B. alle Teilnehmer oder alle
+     * Karten der aktuellen Roulette-Leiste). Bereits geladene, wartende oder
+     * kürzlich fehlgeschlagene Namen werden übersprungen.
+     */
+    public void prefetch(Collection<String> lowers) {
+        if (lowers == null || lowers.isEmpty() || !avatarsEnabled()) {
+            return;
+        }
+        synchronized (this) {
+            for (String lower : lowers) {
+                if (lower != null && !lower.isEmpty()) {
+                    enqueueLocked(lower);
+                }
+            }
+        }
+    }
+
+    /** Lädt proaktiv die Avatare aller Teilnehmer einer Liste. */
+    public void prefetchParticipants(List<Participant> participants) {
+        if (participants == null || participants.isEmpty()) {
+            return;
+        }
+        // Sichtbare zuerst? Die Liste ist bereits in Anzeige-Reihenfolge –
+        // einfach in dieser Reihenfolge einreihen.
+        java.util.ArrayList<String> lowers = new java.util.ArrayList<>(participants.size());
+        for (Participant p : participants) {
+            if (p != null) {
+                lowers.add(p.lower);
+            }
+        }
+        prefetch(lowers);
+    }
+
+    private void enqueueLocked(String lower) {
+        if (cache.containsKey(lower) || queued.contains(lower)) {
+            return;
         }
         Long failed = failedAt.get(lower);
         if (failed != null && System.currentTimeMillis() - failed < FAIL_COOLDOWN_MS) {
-            return null;
+            return;
         }
-        inFlight.add(lower);
-        pool.submit(() -> download(lower));
-        return null;
+        queued.add(lower);
+        queue.offer(lower);
     }
 
     private static boolean avatarsEnabled() {
@@ -93,20 +144,69 @@ public class AvatarManager {
         return state != null && state.config.avatars;
     }
 
+    private void workerLoop() {
+        while (true) {
+            String lower;
+            try {
+                lower = queue.take();
+            } catch (InterruptedException e) {
+                return;
+            }
+            try {
+                if (avatarsEnabled()) {
+                    download(lower);
+                }
+            } catch (Exception ignored) {
+                fail(lower);
+            } finally {
+                synchronized (this) {
+                    queued.remove(lower);
+                }
+                // decapi.me schonen: kurze Pause zwischen den Requests.
+                try {
+                    Thread.sleep(REQUEST_DELAY_MS);
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        }
+    }
+
     private void download(String lower) {
         try {
-            String url = getString("https://decapi.me/twitch/avatar/" + lower).trim();
-            if (!url.startsWith("http")) {
-                fail(lower);
-                return;
+            String url;
+            synchronized (this) {
+                url = urlCache.get(lower);
+            }
+            if (url == null) {
+                url = getString("https://decapi.me/twitch/avatar/" + lower).trim();
+                if (!url.startsWith("http") || url.length() > 500) {
+                    fail(lower);
+                    return;
+                }
+                synchronized (this) {
+                    urlCache.put(lower, url);
+                }
             }
             byte[] data = getBytes(url);
             if (data.length == 0 || data.length > 4_000_000) {
                 fail(lower);
                 return;
             }
-            NativeImage square = toSquare(NativeImage.read(data), TEX_SIZE);
-            MinecraftClient.getInstance().execute(() -> register(lower, square));
+            NativeImage raw = NativeImage.read(data);
+            NativeImage square;
+            try {
+                square = toSquare(raw, TEX_SIZE);
+            } finally {
+                raw.close();
+            }
+            MinecraftClient client = MinecraftClient.getInstance();
+            if (client == null) {
+                square.close();
+                fail(lower);
+                return;
+            }
+            client.execute(() -> register(lower, square));
         } catch (Exception e) {
             fail(lower);
         }
@@ -121,17 +221,16 @@ public class AvatarManager {
             texture.upload();
             synchronized (this) {
                 cache.put(lower, new AvatarImage(id, image.getWidth()));
-                inFlight.remove(lower);
                 failedAt.remove(lower);
                 evictLocked(client);
             }
         } catch (Exception e) {
+            image.close();
             fail(lower);
         }
     }
 
     private synchronized void fail(String lower) {
-        inFlight.remove(lower);
         failedAt.put(lower, System.currentTimeMillis());
     }
 
@@ -167,7 +266,7 @@ public class AvatarManager {
     private String getString(String url) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(8))
-                .header("User-Agent", "GorgiiBot/1.0 (Minecraft mod)")
+                .header("User-Agent", "GorgiiBot/1.1 (Minecraft mod)")
                 .GET().build();
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
@@ -176,10 +275,10 @@ public class AvatarManager {
         return response.body();
     }
 
-    private byte[] getBytes(String url) throws Exception {
+    private String getBytes(String url) throws Exception {
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
                 .timeout(Duration.ofSeconds(10))
-                .header("User-Agent", "GorgiiBot/1.0 (Minecraft mod)")
+                .header("User-Agent", "GorgiiBot/1.1 (Minecraft mod)")
                 .GET().build();
         HttpResponse<byte[]> response = http.send(request, HttpResponse.BodyHandlers.ofByteArray());
         if (response.statusCode() != 200) {

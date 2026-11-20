@@ -18,7 +18,8 @@ import java.util.List;
  * laufen radial mit.
  */
 public class WheelRenderer {
-    private static final int TEX_SIZE = 512;
+    /** Hochauflösend (1024×1024), damit das Rad auch groß scharf bleibt. */
+    private static final int TEX_SIZE = 1024;
     /** Zeiger-Winkel (oben) im Textur-Koordinatensystem. */
     private static final double POINTER_ANGLE = -Math.PI / 2.0;
     /** Ab dieser Teilnehmerzahl werden keine Namen mehr gezeichnet (Performance). */
@@ -82,15 +83,19 @@ public class WheelRenderer {
                 if (!empty && count > 1 && inSeg < 0.012) {
                     color = GuiUtil.darken(color, 0.45f);
                 }
-                // Außenring
-                if (dist > radius - 10) {
+                // Außenring (skaliert mit der Texturgröße)
+                int ringOuter = Math.max(4, TEX_SIZE / 51);
+                int ringInner = Math.max(6, TEX_SIZE / 36);
+                int hubOuter = Math.max(12, TEX_SIZE / 15);
+                int hubInner = Math.max(10, TEX_SIZE / 17);
+                if (dist > radius - ringOuter) {
                     color = GuiUtil.darken(color, 0.55f);
-                } else if (dist > radius - 14) {
+                } else if (dist > radius - ringInner) {
                     color = 0xFFF5F5F5;
                 }
                 // Nabe (Mitte)
-                if (dist < 34) {
-                    color = dist < 30 ? 0xFF23262E : 0xFFF5F5F5;
+                if (dist < hubOuter) {
+                    color = dist < hubInner ? 0xFF23262E : 0xFFF5F5F5;
                 }
                 image.setColorArgb(x, y, color);
             }
@@ -144,7 +149,7 @@ public class WheelRenderer {
         matrices.translate(centerX, centerY);
         matrices.rotate(rotation);
         matrices.translate(-half, -half);
-        // Vollständige Textur (Quellgröße 512×512) auf size×size skalieren.
+        // Vollständige Textur (Quellgröße 1024×1024) auf size×size skalieren.
         GuiUtil.drawTexture(context, textureId, 0, 0, size, size, TEX_SIZE, TEX_SIZE);
         matrices.popMatrix();
 

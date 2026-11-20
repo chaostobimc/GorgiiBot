@@ -7,7 +7,9 @@ import net.fabricmc.loader.api.FabricLoader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.Locale;
+import java.util.Map;
 
 /** JSON-Konfiguration (config/gorgiibot.json). Wird live angewendet. */
 public class GorgiiConfig {
@@ -33,6 +35,12 @@ public class GorgiiConfig {
     public boolean autoRemoveConfirmed = true;
     /** Gewinner ohne Reaktion nach Ablauf automatisch entfernen. */
     public boolean autoRemoveTimeout = true;
+    /**
+     * Banliste: Login (klein) -> Anzeigename. Gesperrte User können nicht
+     * teilnehmen und werden sofort aus dem Pool entfernt. Bleibt über
+     * Neustarts erhalten (in derselben JSON-Datei).
+     */
+    public Map<String, String> banned = new LinkedHashMap<>();
 
     public static Path file() {
         return FabricLoader.getInstance().getConfigDir().resolve("gorgiibot.json");
@@ -81,6 +89,23 @@ public class GorgiiConfig {
         if (claimSeconds > 300) {
             claimSeconds = 300;
         }
+        if (banned == null) {
+            banned = new LinkedHashMap<>();
+        }
+        // Keys normalisieren (klein), leere Einträge verwerfen.
+        Map<String, String> clean = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e : banned.entrySet()) {
+            if (e.getKey() == null) {
+                continue;
+            }
+            String key = e.getKey().trim().toLowerCase(Locale.ROOT);
+            if (key.isEmpty()) {
+                continue;
+            }
+            String display = e.getValue() == null || e.getValue().isBlank() ? key : e.getValue().trim();
+            clean.put(key, display);
+        }
+        banned = clean;
     }
 
     public void save() {
