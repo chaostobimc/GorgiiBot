@@ -42,12 +42,13 @@ Zum Testen direkt aus dem Quellcode: `./gradlew runClient`.
   (funktioniert im Singleplayer und auf Servern, pausiert das Spiel nicht).
   Unterbefehlele: `/giveaway rad`, `/giveaway roulette`,
   `/giveaway teilnehmer`, `/giveaway gesperrt`, `/giveaway einstellungen`.
-- Das Fenster ist ein **großes, hochauflösendes Fenster** mit
-  Sidebar-Navigation (Icons) und Karten – groß und scharf statt kleiner
-  Minecraft-Menü-Optik.
-  **Tipp für die hohe Auflösung:** In den Minecraft-Optionen die
-  **GUI-Skala auf „Automatisch“ oder 3–4** stellen. Dann ist alles groß,
-  scharf und mit Schatten und abgerundeten Ecken dargestellt.
+- Das Menü sieht aus **wie ein normales Minecraft-Menü**: oben eine Reihe
+  Vanilla-Buttons zum Umschalten (Glücksrad, Roulette, Teilnehmer,
+  Gesperrt, Einstellungen), Standard-Schrift, flache Listen mit
+  Hover-Highlight und Trennlinien – keine eigene „Programm-Optik“.
+  **Tipp:** In den Minecraft-Optionen die **GUI-Skala** passend einstellen
+  (z. B. 3–4) – dann ist alles angenehm groß, aber weiter komplett im
+  Minecraft-Stil.
 - In den **Einstellungen**: Twitch-Kanal und Schlüsselwort (Standard:
   `!teilnahme`) eintragen.
 - Auf **Verbinden** klicken – der Mod hört ab sofort anonym den Twitch-Chat
@@ -72,14 +73,15 @@ Zum Testen direkt aus dem Quellcode: `./gradlew runClient`.
   gerade sichtbaren Karten. Bei vielen Teilnehmern dauert es ein paar
   Sekunden, bis alle Bilder da sind; Platzhalter zeigen bis dahin den
   Anfangsbuchstaben.
-- **Teilnehmer verwalten** (Sidebar): Liste aller Teilnehmer mit Suche,
-  Sortierung (Neueste/Älteste/A–Z/Z–A) und Paginierung. Pro Zeile:
-  **Papierkorb = entfernen**, **Verbotsschild = bannen**. Manuell
-  hinzufügen, 12 Test-User oder alle leeren ist ebenfalls möglich.
-- **Gesperrte User** (Sidebar): Liste aller Banns mit Suche und Sortierung.
-  **Haken = entbannen** – der User kann danach wieder per Keyword
-  teilnehmen. Gesperrte werden sofort aus dem Pool entfernt und können
-  nicht mehr teilnehmen. Die Banliste bleibt über Neustarts erhalten.
+- **Teilnehmer** (Button oben): Liste aller Teilnehmer mit Avatar, Name,
+  „[SUB]“-Markierung, Login und Beitrittszeit, dazu Suche, Sortierung
+  (Neueste/Älteste/A–Z/Z–A) und Blättern (`<` / `>`). Pro Zeile:
+  **X = entfernen**, **Bann = bannen**. Unten: manuell hinzufügen,
+  Test-User anlegen, alle leeren.
+- **Gesperrt** (Button oben): Liste aller Banns mit Suche, Sortierung und
+  Blättern. **Frei = entbannen** – der User kann danach wieder per Keyword
+  teilnehmen. Gesperrte fliegen sofort aus dem Pool, können nicht mehr
+  teilnehmen und bleiben über Neustarts erhalten.
 - Neu in den Einstellungen: **Bestätigung** (30/45/60/90/120/180 s),
   **Avatare** an/aus, Gewinner **nach Claim** bzw. **nach Timeout**
   automatisch entfernen.

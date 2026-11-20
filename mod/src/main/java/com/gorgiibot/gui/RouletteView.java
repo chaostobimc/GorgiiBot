@@ -47,7 +47,7 @@ public class RouletteView {
     /** Idle-Geschwindigkeit der Web-App (px/s). */
     private static final float IDLE_SPEED = 45f;
     private static final int MAX_IDLE_CARDS = 400;
-    private static final int ACCENT = 0xFFFFC94D;
+    private static final int ACCENT = 0xFFFFAA00;
 
     private enum Mode {
         IDLE, SPINNING, LANDED
@@ -180,8 +180,7 @@ public class RouletteView {
     /** Zeichnet Strip + Marker; ruft nach der Landepause einmal den Callback auf. */
     public void draw(DrawContext context, TextRenderer textRenderer, AvatarManager avatars,
                      int x, int y, int width, int height) {
-        GuiUtil.roundedRect(context, x, y, x + width, y + height, 10, 0xFF101216);
-        GuiUtil.roundedBorder(context, x, y, x + width, y + height, 10, 0xFF2A2E36);
+        context.fill(x, y, x + width, y + height, GuiUtil.PANEL);
 
         // Alle Avatare der aktuellen Leiste einreihen (auch off-screen) – Fix
         // „nicht alle Profilbilder laden“. Dedup macht das billig.
@@ -205,7 +204,7 @@ public class RouletteView {
         if (mode == Mode.IDLE) {
             if (idleCards.isEmpty()) {
                 GuiUtil.drawCenteredText(context, textRenderer, hint, x + width / 2,
-                        y + (height - 8) / 2, 0xFF8B949E, false);
+                        y + (height - 8) / 2, 0xFFA0A0A0, false);
                 drawMarker(context, x, y, width, height);
                 return;
             }
@@ -283,12 +282,11 @@ public class RouletteView {
                           Participant p, int cardX, int cardTop, boolean highlighted) {
         int x2 = cardX + CARD_WIDTH;
         int y2 = cardTop + CARD_HEIGHT;
-        // Schatten + abgerundete Karte
-        GuiUtil.roundedRect(context, cardX + 2, cardTop + 3, x2 + 2, y2 + 3, 8, 0x66000000);
-        GuiUtil.roundedRect(context, cardX, cardTop, x2, y2, 8, highlighted ? 0xFF2A2410 : 0xFF1B1E24);
-        GuiUtil.roundedBorder(context, cardX, cardTop, x2, y2, 8, highlighted ? ACCENT : 0xFF343945);
+        // Flache Karte im Minecraft-Stil
+        GuiUtil.panel(context, cardX, cardTop, x2, y2, highlighted ? 0xC0201A00 : 0xC0101010,
+                highlighted ? ACCENT : 0xFF404040);
         if (highlighted) {
-            GuiUtil.roundedBorder(context, cardX + 2, cardTop + 2, x2 - 2, y2 - 2, 6, 0x88FFC94D);
+            GuiUtil.fillBorder(context, cardX + 1, cardTop + 1, x2 - 1, y2 - 1, ACCENT);
         }
         int ax = cardX + (CARD_WIDTH - AVATAR) / 2;
         int ay = cardTop + 10;
@@ -296,21 +294,21 @@ public class RouletteView {
         if (avatar != null) {
             GuiUtil.drawTexture(context, avatar.id(), ax, ay, AVATAR, AVATAR, avatar.size(),
                     avatar.size());
-            GuiUtil.roundedBorder(context, ax, ay, ax + AVATAR, ay + AVATAR, 6, 0x55343945);
+            GuiUtil.fillBorder(context, ax, ay, ax + AVATAR, ay + AVATAR, 0xFF202020);
         } else {
             // Platzhalter: Twitch-Farbe + Anfangsbuchstabe
-            GuiUtil.roundedRect(context, ax, ay, ax + AVATAR, ay + AVATAR, 6, p.color);
+            context.fill(ax, ay, ax + AVATAR, ay + AVATAR, p.color);
             String initial = p.name.isEmpty() ? "?" : p.name.substring(0, 1).toUpperCase();
             GuiUtil.drawCenteredText(context, textRenderer, initial, ax + AVATAR / 2,
                     ay + (AVATAR - 8) / 2, 0xFFFFFFFF, true);
         }
         String name = GuiUtil.trimToWidth(textRenderer, p.name, CARD_WIDTH - 10);
-        int nameColor = p.boosted ? 0xFFFFD166 : 0xFFE6E6E6;
+        int nameColor = p.boosted ? 0xFFFFAA00 : 0xFFFFFFFF;
         GuiUtil.drawCenteredText(context, textRenderer, name, cardX + CARD_WIDTH / 2,
                 cardTop + CARD_HEIGHT - 20, nameColor, false);
         if (p.boosted) {
-            GuiUtil.drawCenteredText(context, textRenderer, "★ SUB", cardX + CARD_WIDTH / 2,
-                    cardTop + CARD_HEIGHT - 11, 0xFFFFD166, false);
+            GuiUtil.drawCenteredText(context, textRenderer, "[SUB]", cardX + CARD_WIDTH / 2,
+                    cardTop + CARD_HEIGHT - 11, 0xFFFFAA00, true);
         }
     }
 

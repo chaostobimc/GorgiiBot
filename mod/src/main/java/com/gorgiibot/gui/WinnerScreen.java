@@ -17,14 +17,14 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Gewinner-Screen: großer Avatar, Name, <b>live</b>
+ * Gewinner-Screen im Vanilla-Stil: Avatar, Name, <b>live</b>
  * mitlaufender Chat-Verlauf, Bestätigungs-Countdown (der Gewinner muss sich
  * im Chat melden), Konfetti und Fanfare. Meldet sich niemand, folgt nach
  * Ablauf der Zeit automatisch ein Reroll – genau wie in der Web-App.
  */
 public class WinnerScreen extends Screen {
     private static final int[] CONFETTI_COLORS = {
-            0xFFF85149, 0xFFFFC94D, 0xFF3FB950, 0xFF58A6FF, 0xFFBC8CFF, 0xFFFF7B72, 0xFF79C0FF
+            0xFFFF5555, 0xFFFFAA00, 0xFF55FF55, 0xFF55FFFF, 0xFFFF55FF, 0xFFFFFF55, 0xFFFFFFFF
     };
 
     private static class Confetto {
@@ -148,30 +148,28 @@ public class WinnerScreen extends Screen {
         int ph = 300;
         int px = (this.width - pw) / 2;
         int py = (this.height - ph) / 2;
-        GuiUtil.shadow(context, px, py, px + pw, py + ph, 12);
-        GuiUtil.roundedRect(context, px, py, px + pw, py + ph, 12, GuiUtil.PANEL);
-        GuiUtil.roundedBorder(context, px, py, px + pw, py + ph, 12, GuiUtil.ACCENT);
+        GuiUtil.panel(context, px, py, px + pw, py + ph, GuiUtil.PANEL, GuiUtil.BORDER);
 
         String title = state.isRerollClaim() ? "GEWINNER (REROLL)" : "GEWINNER";
-        GuiUtil.drawCenteredText(context, tr, title, px + pw / 2, py + 36, GuiUtil.ACCENT, false);
+        GuiUtil.drawCenteredText(context, tr, title, px + pw / 2, py + 8, GuiUtil.GOLD, true);
 
-        int avatarSize = 80;
+        int avatarSize = 64;
         int ax = px + pw / 2 - avatarSize / 2;
-        int ay = py + 52;
+        int ay = py + 24;
         AvatarManager.AvatarImage avatar = state.avatars.getAvatar(winner.lower);
         if (avatar != null) {
             GuiUtil.drawTexture(context, avatar.id(), ax, ay, avatarSize, avatarSize, avatar.size(),
                     avatar.size());
-            GuiUtil.roundedBorder(context, ax, ay, ax + avatarSize, ay + avatarSize, 8, 0x55343945);
         } else {
-            GuiUtil.roundedRect(context, ax, ay, ax + avatarSize, ay + avatarSize, 8, winner.color);
+            context.fill(ax, ay, ax + avatarSize, ay + avatarSize, winner.color);
             String initial = winner.name.isEmpty() ? "?" : winner.name.substring(0, 1).toUpperCase();
             GuiUtil.drawCenteredText(context, tr, initial, px + pw / 2, ay + (avatarSize - 8) / 2,
                     0xFFFFFFFF, true);
         }
+        GuiUtil.fillBorder(context, ax, ay, ax + avatarSize, ay + avatarSize, 0xFF202020);
 
         GuiUtil.drawCenteredText(context, tr, GuiUtil.trimToWidth(tr, winner.name, pw - 40),
-                px + pw / 2, ay + avatarSize + 8, GuiUtil.TEXT, false);
+                px + pw / 2, ay + avatarSize + 6, GuiUtil.TEXT, true);
 
         // ---- Bestätigungs-Status ----
         boolean pending = state.isClaimPending();
@@ -180,43 +178,42 @@ public class WinnerScreen extends Screen {
         String status;
         int statusColor;
         if (claimed) {
-            status = "Bestätigt – Glückwunsch!";
+            status = "Bestätigt - Glückwunsch!";
             statusColor = GuiUtil.GREEN;
         } else if (expired) {
-            status = "Zeit abgelaufen – Reroll startet …";
+            status = "Zeit abgelaufen - Reroll startet ...";
             statusColor = GuiUtil.RED;
         } else if (pending) {
-            status = "Warte auf Bestätigung im Chat …";
+            status = "Warte auf Bestätigung im Chat ...";
             statusColor = GuiUtil.YELLOW;
         } else {
             status = "Bestätigung beendet";
             statusColor = GuiUtil.TEXT_DIM;
         }
         GuiUtil.drawCenteredText(context, tr, GuiUtil.trimToWidth(tr, status, pw - 24),
-                px + pw / 2, py + 148, statusColor, false);
+                px + pw / 2, py + 122, statusColor, true);
 
         long remain = state.claimRemainMs();
         long total = state.claimTotalMs();
         int barX = px + 20;
         int barW = pw - 40;
-        int barY = py + 162;
-        GuiUtil.roundedRect(context, barX, barY, barX + barW, barY + 5, 2, 0xFF23262E);
+        int barY = py + 136;
+        context.fill(barX, barY, barX + barW, barY + 4, 0xFF202020);
         int filled = total <= 0 ? 0 : (int) (barW * Math.max(0, Math.min(1, remain / (double) total)));
         int barColor = claimed ? GuiUtil.GREEN : remain < 10_000 ? GuiUtil.RED : GuiUtil.YELLOW;
-        if (filled > 2) {
-            GuiUtil.roundedRect(context, barX, barY, barX + filled, barY + 5, 2, barColor);
+        if (filled > 1) {
+            context.fill(barX, barY, barX + filled, barY + 4, barColor);
         }
         String timerText = claimed ? "Bestätigt"
                 : pending ? "noch " + ((remain + 999) / 1000) + " s" : "0 s";
-        GuiUtil.drawCenteredText(context, tr, timerText, px + pw / 2, barY + 8, GuiUtil.TEXT_DIM, false);
+        GuiUtil.drawCenteredText(context, tr, timerText, px + pw / 2, barY + 7, GuiUtil.TEXT_DIM, true);
 
         // ---- Chat-Verlauf (live) ----
-        int hy = barY + 24;
-        context.drawText(tr, "Chat-Verlauf:", px + 20, hy, GuiUtil.TEXT_FAINT, false);
-        hy += 12;
+        int hy = barY + 22;
+        context.drawText(tr, "Chat-Verlauf:", px + 20, hy, GuiUtil.TEXT_DIM, true);
+        hy += 11;
         if (history.isEmpty()) {
-            GuiUtil.drawCenteredText(context, tr, "Noch keine Nachrichten – warte auf den Chat",
-                    px + pw / 2, hy, GuiUtil.TEXT_FAINT, false);
+            context.drawText(tr, "Noch keine Nachrichten", px + 20, hy, GuiUtil.TEXT_FAINT, true);
         } else {
             int shown = Math.min(4, history.size());
             int start = history.size() - shown;
@@ -224,7 +221,7 @@ public class WinnerScreen extends Screen {
                 ChatLine line = history.get(i);
                 String row = line.displayName() + ": " + line.text();
                 context.drawText(tr, GuiUtil.trimToWidth(tr, row, pw - 40), px + 20, hy,
-                        i == history.size() - 1 ? GuiUtil.TEXT : GuiUtil.TEXT_DIM, false);
+                        i == history.size() - 1 ? GuiUtil.TEXT : GuiUtil.TEXT_DIM, true);
                 hy += 11;
             }
         }

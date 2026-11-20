@@ -6,40 +6,49 @@ import net.minecraft.client.gui.DrawContext;
 import net.minecraft.util.Identifier;
 
 /**
- * Zeichenhelfer für die Giveaway-Screens: Theme (abgerundete Ecken,
- * Schatten, Verläufe) plus die ursprünglichen Textur-Helfer.
+ * Zeichenhelfer im <b>Vanilla-Minecraft-Stil</b>: flache Flächen, 1-px-Rahmen,
+ * Standard-Textfarben – keine abgerundeten Ecken, Schatten oder Verläufe.
  */
 public final class GuiUtil {
     private GuiUtil() {
     }
 
-    // ---- Theme (GitHub-Dark) ----
-    public static final int BG = 0xFF0D1117;
-    public static final int PANEL = 0xFF161B22;
-    public static final int PANEL_LIGHT = 0xFF1C2128;
-    public static final int PANEL_DARK = 0xFF0D1117;
-    public static final int BORDER = 0xFF30363D;
-    public static final int BORDER_SOFT = 0xFF21262D;
-    public static final int TEXT = 0xFFE6EDF3;
-    public static final int TEXT_DIM = 0xFF8B949E;
-    public static final int TEXT_FAINT = 0xFF6E7681;
-    public static final int ACCENT = 0xFFFFC94D;
-    public static final int ACCENT_BLUE = 0xFF58A6FF;
-    public static final int GREEN = 0xFF3FB950;
-    public static final int RED = 0xFFF85149;
-    public static final int YELLOW = 0xFFFFC94D;
+    // ---- Textfarben wie im Vanilla-UI ----
+    public static final int TEXT = 0xFFFFFFFF;
+    public static final int TEXT_DIM = 0xFFA0A0A0;
+    public static final int TEXT_FAINT = 0xFF808080;
+    public static final int GOLD = 0xFFFFAA00;
+    public static final int YELLOW = 0xFFFFFF55;
+    public static final int GREEN = 0xFF55FF55;
+    public static final int RED = 0xFFFF5555;
+    public static final int AQUA = 0xFF55FFFF;
+
+    // ---- Flächen ----
+    /** Hintergrund einer Liste (wie im Vanilla-UI halbtransparent schwarz). */
+    public static final int PANEL = 0x90000000;
+    /** Etwas dunklere Fläche für Kopf-/Fußzeilen. */
+    public static final int PANEL_DARK = 0xB0000000;
+    public static final int BORDER = 0xFF555555;
+    public static final int BORDER_DARK = 0xFF000000;
+    /** Trennlinie zwischen Listenzeilen. */
+    public static final int SEPARATOR = 0x30FFFFFF;
+    /** Hover-Highlight einer Zeile. */
+    public static final int HOVER = 0x33FFFFFF;
+    /** Bildschirm abdunkeln (statt Blur – der ist nur 1× pro Frame erlaubt). */
+    public static final int BACKDROP = 0xC0101010;
 
     /** Kürzt Text mit „…“ auf die maximale Pixelbreite. */
     public static String trimToWidth(TextRenderer textRenderer, String text, int maxWidth) {
+        if (text == null) {
+            return "";
+        }
         if (textRenderer.getWidth(text) <= maxWidth) {
             return text;
         }
-        String ellipsis = "…";
-        int ellipsisWidth = textRenderer.getWidth(ellipsis);
-        return textRenderer.trimToWidth(text, Math.max(0, maxWidth - ellipsisWidth)) + ellipsis;
+        return textRenderer.trimToWidth(text, Math.max(0, maxWidth - 6)) + "…";
     }
 
-    /** Zeichnet einen 1px-Rahmen. */
+    /** Zeichnet einen 1-px-Rahmen. */
     public static void fillBorder(DrawContext context, int x1, int y1, int x2, int y2, int color) {
         context.fill(x1, y1, x2, y1 + 1, color);
         context.fill(x1, y2 - 1, x2, y2, color);
@@ -51,6 +60,18 @@ public final class GuiUtil {
     public static void drawCenteredText(DrawContext context, TextRenderer textRenderer, String text,
                                        int centerX, int y, int color, boolean shadow) {
         context.drawText(textRenderer, text, centerX - textRenderer.getWidth(text) / 2, y, color, shadow);
+    }
+
+    /** Text rechtsbündig an {@code rightX} ausrichten. */
+    public static void drawRightText(DrawContext context, TextRenderer textRenderer, String text,
+                                     int rightX, int y, int color, boolean shadow) {
+        context.drawText(textRenderer, text, rightX - textRenderer.getWidth(text), y, color, shadow);
+    }
+
+    /** Fläche mit 1-px-Rahmen (Vanilla-Kasten). */
+    public static void panel(DrawContext context, int x1, int y1, int x2, int y2, int fill, int border) {
+        context.fill(x1, y1, x2, y2, fill);
+        fillBorder(context, x1, y1, x2, y2, border);
     }
 
     /**
@@ -78,103 +99,6 @@ public final class GuiUtil {
         int green = (int) (((argb >> 8) & 0xFF) * factor);
         int blue = (int) ((argb & 0xFF) * factor);
         return (alpha << 24) | (red << 16) | (green << 8) | blue;
-    }
-
-    /** Hellt eine ARGB-Farbe um den Faktor auf (Alpha bleibt). */
-    public static int lighten(int argb, float factor) {
-        int alpha = (argb >>> 24) & 0xFF;
-        int red = Math.min(255, (int) (((argb >> 16) & 0xFF) * factor));
-        int green = Math.min(255, (int) (((argb >> 8) & 0xFF) * factor));
-        int blue = Math.min(255, (int) ((argb & 0xFF) * factor));
-        return (alpha << 24) | (red << 16) | (green << 8) | blue;
-    }
-
-    /** Mischt zwei ARGB-Farben (t = 0 -> a, t = 1 -> b). */
-    public static int lerpColor(int a, int b, float t) {
-        int alpha = lerpChannel((a >>> 24) & 0xFF, (b >>> 24) & 0xFF, t);
-        int red = lerpChannel((a >> 16) & 0xFF, (b >> 16) & 0xFF, t);
-        int green = lerpChannel((a >> 8) & 0xFF, (b >> 8) & 0xFF, t);
-        int blue = lerpChannel(a & 0xFF, b & 0xFF, t);
-        return (alpha << 24) | (red << 16) | (green << 8) | blue;
-    }
-
-    private static int lerpChannel(int a, int b, float t) {
-        return Math.max(0, Math.min(255, Math.round(a + (b - a) * t)));
-    }
-
-    /**
-     * Füllt ein abgerundetes Rechteck (Eckenradius {@code r}). Näherung aus
-     * Rechteck + Ecken-Pixeln – ohne Shader, dafür in jedem GUI-Maßstab scharf.
-     */
-    public static void roundedRect(DrawContext context, int x1, int y1, int x2, int y2, int r, int color) {
-        if (x2 <= x1 || y2 <= y1) {
-            return;
-        }
-        int rad = Math.max(0, Math.min(r, Math.min(x2 - x1, y2 - y1) / 2));
-        // Hauptfläche ohne Ecken
-        context.fill(x1 + rad, y1, x2 - rad, y2, color);
-        context.fill(x1, y1 + rad, x2, y2 - rad, color);
-        // Ecken: je 2 Zeilen einrücken (weiche Rundung)
-        if (rad >= 2) {
-            context.fill(x1 + 1, y1 + 1, x1 + rad, y1 + 2, color);
-            context.fill(x2 - rad, y1 + 1, x2 - 1, y1 + 2, color);
-            context.fill(x1 + 1, y2 - 2, x1 + rad, y2 - 1, color);
-            context.fill(x2 - rad, y2 - 2, x2 - 1, y2 - 1, color);
-        }
-        if (rad >= 4) {
-            context.fill(x1, y1 + 2, x1 + 1, y1 + rad, color);
-            context.fill(x2 - 1, y1 + 2, x2, y1 + rad, color);
-            context.fill(x1, y2 - rad, x1 + 1, y2 - 2, color);
-            context.fill(x2 - 1, y2 - rad, x2, y2 - 2, color);
-        }
-    }
-
-    /** Abgerundeter Rahmen (1 px). */
-    public static void roundedBorder(DrawContext context, int x1, int y1, int x2, int y2, int r, int color) {
-        if (x2 <= x1 || y2 <= y1) {
-            return;
-        }
-        int rad = Math.max(1, Math.min(r, Math.min(x2 - x1, y2 - y1) / 2));
-        context.fill(x1 + rad, y1, x2 - rad, y1 + 1, color);
-        context.fill(x1 + rad, y2 - 1, x2 - rad, y2, color);
-        context.fill(x1, y1 + rad, x1 + 1, y2 - rad, color);
-        context.fill(x2 - 1, y1 + rad, x2, y2 - rad, color);
-        // Eckverbindungen
-        context.fill(x1 + 1, y1 + 1, x1 + rad, y1 + 2, color);
-        context.fill(x2 - rad, y1 + 1, x2 - 1, y1 + 2, color);
-        context.fill(x1 + 1, y2 - 2, x1 + rad, y2 - 1, color);
-        context.fill(x2 - rad, y2 - 2, x2 - 1, y2 - 1, color);
-        context.fill(x1, y1 + 2, x1 + 1, y1 + rad, color);
-        context.fill(x2 - 1, y1 + 2, x2, y1 + rad, color);
-        context.fill(x1, y2 - rad, x1 + 1, y2 - 2, color);
-        context.fill(x2 - 1, y2 - rad, x2, y2 - 2, color);
-    }
-
-    /** Weicher Schatten unter einem Fenster (mehrere Alpha-Schichten). */
-    public static void shadow(DrawContext context, int x1, int y1, int x2, int y2, int r) {
-        // Äußere, weiche Schicht
-        roundedRect(context, x1 - 6, y1 - 4, x2 + 6, y2 + 10, r + 4, 0x33000000);
-        roundedRect(context, x1 - 3, y1 - 2, x2 + 3, y2 + 6, r + 2, 0x55000000);
-        roundedRect(context, x1 - 1, y1, x2 + 1, y2 + 3, r + 1, 0x66000000);
-    }
-
-    /** Vertikaler Farbverlauf (oben -> unten), in 2-px-Schritten. */
-    public static void gradientV(DrawContext context, int x1, int y1, int x2, int y2, int top, int bottom) {
-        int h = Math.max(1, y2 - y1);
-        for (int y = y1; y < y2; y += 2) {
-            float t = (y - y1) / (float) h;
-            int c = lerpColor(top, bottom, t);
-            context.fill(x1, y, x2, Math.min(y2, y + 2), c);
-        }
-    }
-
-    /** Füllt einen Kreis (Näherung aus Zeilen, für Status-Punkte). */
-    public static void fillCircle(DrawContext context, int cx, int cy, int radius, int color) {
-        for (int dy = -radius; dy <= radius; dy++) {
-            double half = Math.sqrt(Math.max(0, radius * radius - dy * dy));
-            int w = (int) Math.round(half);
-            context.fill(cx - w, cy + dy, cx + w + 1, cy + dy + 1, color);
-        }
     }
 
     /** Prüft, ob ein Punkt in einem Rechteck liegt (für Hover-Tests). */
